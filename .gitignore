@@ -1,0 +1,3 @@
+# C++ gRPC source and installation directories
+/grpc/
+/grpc_install/

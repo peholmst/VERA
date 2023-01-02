@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "grpc": true,
+        "grpc_install": true
+    }
+}
