@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+message AlertSubscriptionRequest {
+    string alert_recipient_id = 1;
+}
+
+message AlertAcknowledgementRequest {
+    string alert_recipient_id = 1;
+    string alert_id = 2;
+}
+
+message AlertAcknowledgementResponse {
+    // Empty message by design
+}
+
+message Assignment {
+    // TODO Add fields
+}
+
+message Alert {
+    string alert_id = 1;
+    Assignment assignment = 2;
+
+}
+
+service AlertService {
+    rpc SubscribeToAlerts (AlertSubscriptionRequest) returns (stream Alert) {}
+    rpc AcknowledgeAlert (AlertAcknowledgementRequest) returns (AlertAcknowledgementResponse) {}
+}
