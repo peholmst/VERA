@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package vera.alert.proto;
+
 message AlertSubscriptionRequest {
     string alert_recipient_id = 1;
 }
