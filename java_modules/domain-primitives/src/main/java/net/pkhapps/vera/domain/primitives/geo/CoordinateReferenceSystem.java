@@ -16,24 +16,24 @@
 package net.pkhapps.vera.domain.primitives.geo;
 
 /**
- * Interface describing a Coordinate Reference System (CRS) or Spatial Reference
- * System (SRS). The interface is not intended to be a complete definition of a
- * CRS as would be used in a dedicated GIS. Rather, the interface is defined
- * with the requirements of VERA in mind.
- *
- * @author Petter Holmström
+ * Interface describing a Coordinate Reference System (CRS) or Spatial Reference System (SRS). The interface is not
+ * intended to be a complete definition of a CRS as would be used in a dedicated GIS. Rather, the interface is defined
+ * with the requirements of VERA in mind. Implementations can use enums, singletons or anonymous classes.
  */
 public interface CoordinateReferenceSystem {
 
     /**
-     * Validates the given pair of coordinates.
+     * Checks if the given coordinate is valid within the context of this CRS and throws an exception if not.
      *
-     * @param x the X-coordinate.
-     * @param y the Y-coordinate.
-     * @throws IllegalArgumentException if the coordinates are not valid within
-     * the context of this CRS.
+     * @param coordinate the coordinate to validate, never {@code null}.
+     * @throws IllegalArgumentException if the coordinate is invalid.
      */
-    void validateCoordinates(double x, double y);
+    void validateCoordinate(Coordinate coordinate);
+
+    /**
+     * The unit of the coordinates in this CRS.
+     */
+    CoordinateUnit unit();
 
     /**
      * The SRID of this CRS.
@@ -41,7 +41,7 @@ public interface CoordinateReferenceSystem {
     SRID srid();
 
     /**
-     * The human readable name of this CRS.
+     * The human-readable name of this CRS.
      */
     String name();
 }

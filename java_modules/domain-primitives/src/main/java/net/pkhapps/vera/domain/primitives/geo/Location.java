@@ -18,32 +18,33 @@ package net.pkhapps.vera.domain.primitives.geo;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Value object representing a geographical location on a Cartesian plane
- * projected by the given Coordinate Reference System.
+ * Value object representing a geographical location on a Cartesian plane projected by the given Coordinate Reference
+ * System.
  *
- * @param crs the CRS of the coordinates denoting the location.
- * @param x the X-coordinate (longitude).
- * @param y the Y-coordinate (latitude).
+ * @param crs       the CRS of the coordinates denoting the location.
+ * @param longitude the longitude (X-coordinate).
+ * @param latitude  the latitude (Y-coordinate).
  * @author Petter Holmström
  */
 public record Location(
         CoordinateReferenceSystem crs,
-        double x,
-        double y) {
+        Coordinate.Longitude longitude,
+        Coordinate.Latitude latitude) {
 
     /**
      * Creates a new {@code Location}.
      *
-     * @param crs the CRS of the coordinates.
-     * @param x the X coordinate (longitude).
-     * @param y the Y coordinate (latitude).
-     * @throws IllegalArgumentException if the coordinates are invalid within
-     * the given CRS.
+     * @param crs       the CRS of the coordinates, never {@code null}.
+     * @param longitude the longitude (X-coordinate), never {@code null}.
+     * @param latitude  the latitude (Y-coordinate), never {@code null}.
+     * @throws IllegalArgumentException if the coordinates are invalid within the given CRS.
      */
-    public Location(CoordinateReferenceSystem crs, double x, double y) {
-        requireNonNull(crs, "crs must not be null").validateCoordinates(x, y);
-        this.crs = crs;
-        this.x = x;
-        this.y = y;
+    public Location {
+        requireNonNull(crs, "crs must not be null");
+        requireNonNull(longitude, "longitude must not be null");
+        requireNonNull(latitude, "latitude must not be null");
+
+        crs.validateCoordinate(longitude);
+        crs.validateCoordinate(latitude);
     }
 }

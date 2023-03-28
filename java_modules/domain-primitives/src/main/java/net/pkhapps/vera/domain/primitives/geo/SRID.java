@@ -15,6 +15,8 @@
  */
 package net.pkhapps.vera.domain.primitives.geo;
 
+import java.util.Objects;
+
 /**
  * Value object representing a Spatial Reference System Identifier.
  *
@@ -62,24 +64,15 @@ public final class SRID {
     }
 
     @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 53 * hash + this.value;
-        return hash;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SRID srid = (SRID) o;
+        return value == srid.value;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final SRID other = (SRID) obj;
-        return this.value == other.value;
+    public int hashCode() {
+        return Objects.hash(value);
     }
 }
