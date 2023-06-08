@@ -41,25 +41,14 @@
         <maven.compiler.target>20</maven.compiler.target>
 
         <picocli.version>4.7.3</picocli.version>
-        <spring-boot.version>3.0.6</spring-boot.version>
-        <snakeyaml.version>2.0</snakeyaml.version> <!-- Override version provided by Spring Boot -->
-        <oauth2-oidc-sdk.version>10.8</oauth2-oidc-sdk.version>
+        <spring-boot.version>3.1.0</spring-boot.version>
         <vaadin.version>24.1.0</vaadin.version>
         <hazelcast.version>4.2.8</hazelcast.version>
     </properties>
 
     <modules>
-        <module>domain-primitives</module>
-        <module>alert-cli</module>
-        <module>alert-client</module>
-        <module>alert-server</module>
-        <module>auth-client</module>
-        <module>alert-messages</module>
+        <module>common</module>
         <module>dispatcher</module>
-        <module>gis-server-app</module>
-        <module>gis-client</module>
-        <module>gis-messages</module>
-        <module>gis-importer-app</module>
     </modules>
 
     <dependencyManagement>
@@ -68,18 +57,6 @@
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli</artifactId>
                 <version>${picocli.version}</version>
-            </dependency>
-
-            <!-- Spring Boot dependency overrides -->
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>oauth2-oidc-sdk</artifactId>
-                <version>${oauth2-oidc-sdk.version}</version>
             </dependency>
 
             <dependency>
@@ -96,7 +73,7 @@
                 <version>${hazelcast.version}</version>
             </dependency>
 
-            <!-- Import this BOM last, otherwise we will lose the overrides above -->
+            <!-- Import this BOM last, otherwise we will lose the overrides above (if there are any) -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>

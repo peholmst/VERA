@@ -21,18 +21,15 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>net.pkhapps.vera</groupId>
-        <artifactId>dispatcher</artifactId>
+        <artifactId>vera-parent-pom</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>dispatcher-domain</artifactId>
-    <name>VERA Dispatcher Domain Model</name>
+    <artifactId>common</artifactId>
+    <name>VERA Common</name>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>net.pkhapps.vera</groupId>
-            <artifactId>common-domain-primitives</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>common-domain-primitives</module>
+    </modules>
 </project>

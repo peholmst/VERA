@@ -15,24 +15,32 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>net.pkhapps.vera</groupId>
-        <artifactId>dispatcher</artifactId>
+        <artifactId>common</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-
-    <artifactId>dispatcher-domain</artifactId>
-    <name>VERA Dispatcher Domain Model</name>
+    <artifactId>common-domain-primitives</artifactId>
+    <name>VERA Common Domain Primitives</name>
+    <description>
+        Library of domain primitives that are used in all bounded contexts of
+        VERA.
+    </description>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>net.pkhapps.vera</groupId>
-            <artifactId>common-domain-primitives</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

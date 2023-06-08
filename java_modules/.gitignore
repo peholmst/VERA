@@ -1,0 +1,13 @@
+# NetBeans
+nbactions.xml
+
+# Eclipse
+.settings/
+.project
+.classpath
+
+# Maven
+target/
+
+# IntelliJ
+.idea/
