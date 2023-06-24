@@ -114,7 +114,7 @@ public abstract class BaseAggregateRoot<ID extends Serializable> extends BaseEnt
      * @return a new {@link DomainEventId}.
      */
     protected final DomainEventId generateDomainEventId() {
-        return new DomainEventId(id(), nextEventId.getAndIncrement());
+        return DomainEventId.of(id(), nextEventId.getAndIncrement());
     }
 
     /**

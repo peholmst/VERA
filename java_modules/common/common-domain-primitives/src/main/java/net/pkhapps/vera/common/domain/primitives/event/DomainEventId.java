@@ -33,15 +33,20 @@ public final class DomainEventId implements Serializable {
     private final Serializable aggregateRootId;
     private final long eventId;
 
+    private DomainEventId(@NotNull Serializable aggregateRootId, long eventId) {
+        this.aggregateRootId = requireNonNull(aggregateRootId, "aggregateRootId must not be null");
+        this.eventId = eventId;
+    }
+
     /**
-     * Initializing constructor for {@code DomainEventId}.
+     * Creates a new {@code DomainEventId}.
      *
      * @param aggregateRootId the ID of the aggregate root that creates this ID.
      * @param eventId         a long integer unique within the aggregate root that creates this ID.
+     * @return a new {@code DomainEventId}.
      */
-    public DomainEventId(@NotNull Serializable aggregateRootId, long eventId) {
-        this.aggregateRootId = requireNonNull(aggregateRootId, "aggregateRootId must not be null");
-        this.eventId = eventId;
+    public static @NotNull DomainEventId of(@NotNull Serializable aggregateRootId, long eventId) {
+        return new DomainEventId(aggregateRootId, eventId);
     }
 
     /**
