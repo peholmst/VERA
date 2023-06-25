@@ -23,6 +23,7 @@ package net.pkhapps.vera.common.domain.primitives.incident;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -49,16 +50,15 @@ public final class IncidentTypeCode implements Serializable {
      * Creates a new {@code IncidentTypeCode} from a string.
      *
      * @param code the type code as a string, may be {@code null}.
-     * @return an {@code IncidentTypeCode} or {@code null} if the given {@code code} was {@code null}.
+     * @return an {@code IncidentTypeCode}, or {@code null} if the given {@code code} was {@code null}.
      * @throws IllegalArgumentException if the type code was invalid.
      */
     @Contract("null -> null")
-    public static IncidentTypeCode fromString(String code) {
+    public static IncidentTypeCode fromString(@Nullable String code) {
         return code == null ? null : new IncidentTypeCode(code);
     }
 
-    @Override
-    public String toString() {
+    public @NotNull String value() {
         return code;
     }
 

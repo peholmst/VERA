@@ -118,8 +118,8 @@ public final class AddressNumber {
     /**
      * Creates an {@link AddressNumber} from the given string.
      *
-     * @param addressNumber a string representation of the address number.
-     * @return a new {@code AddressNumber}.
+     * @param addressNumber a string representation of the address number, may be {@code null}.
+     * @return a new {@code AddressNumber}, or {@code null} if the given {@code addressNumber} was {@code null}.
      * @throws IllegalArgumentException if the address number string is invalid.
      */
     @Contract("null -> null")
