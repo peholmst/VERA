@@ -117,6 +117,7 @@ public class AddressNumberTest {
 
     @Test
     void fromString_still_validates_the_input() {
+        assertThatThrownBy(() -> AddressNumber.fromString("")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AddressNumber.fromString("-12")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AddressNumber.fromString("12ABC")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AddressNumber.fromString("10-12-13")).isInstanceOf(IllegalArgumentException.class);
