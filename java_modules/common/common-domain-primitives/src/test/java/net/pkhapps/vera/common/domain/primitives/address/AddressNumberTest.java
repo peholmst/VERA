@@ -125,5 +125,9 @@ public class AddressNumberTest {
         assertThatThrownBy(() -> AddressNumber.fromString("<script></script>")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AddressNumber.fromString("\"; DELETE FROM foo;")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AddressNumber.fromString("123456a-12345a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AddressNumber.fromString("123456a-1a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AddressNumber.fromString("1a-123456a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AddressNumber.fromString("123456")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AddressNumber.fromString("123456a")).isInstanceOf(IllegalArgumentException.class);
     }
 }
