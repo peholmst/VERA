@@ -41,7 +41,7 @@ public final class AddressNumber {
      * The maximum allowed length of an address number ({@value } Unicode code units).
      */
     public static final int MAX_LENGTH = 13;
-    private static final Pattern REGEX = Pattern.compile("^\\d{1,5}\\D?(–\\d{1,5}\\D?)?$");
+    private static final Pattern REGEX = Pattern.compile("^[0-9]{1,5}[a-zA-ZåäöÅÄÖ]?(–[0-9]{1,5}[a-zA-ZåäöÅÄÖ]?)?$");
     private final String value;
 
     private AddressNumber(@NotNull String value) {
@@ -56,7 +56,7 @@ public final class AddressNumber {
     }
 
     /**
-     * Creates an {@code AddressNu mber} consisting of a single number.
+     * Creates an {@code AddressNumber} consisting of a single number.
      *
      * @param addressNumber the address number.
      * @return a new {@code AddressNumber}.
@@ -163,10 +163,12 @@ public final class AddressNumber {
         if (addressLetter.length() > 1) {
             throw new IllegalArgumentException("Address letter must be single");
         }
-        if (!StringUtils.isAlpha(addressLetter)) {
+        var ch = Character.toLowerCase(addressLetter.charAt(0));
+        if (ch != 'å' && ch != 'ä' && ch != 'ö' && (ch < 'a' || ch > 'z')) {
             throw new IllegalArgumentException("Invalid address letter");
         }
     }
+
 
     @Override
     public boolean equals(Object o) {

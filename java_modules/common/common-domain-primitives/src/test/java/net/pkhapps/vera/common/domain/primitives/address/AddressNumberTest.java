@@ -31,8 +31,11 @@ public class AddressNumberTest {
 
     @Test
     void address_numbers_can_have_an_extra_letter() {
-        var an = AddressNumber.of(123, "a");
-        assertThat(an.value()).isEqualTo("123a");
+        assertThat(AddressNumber.of(123, "a").value()).isEqualTo("123a");
+        assertThat(AddressNumber.of(123, "z").value()).isEqualTo("123z");
+        assertThat(AddressNumber.of(123, "å").value()).isEqualTo("123å");
+        assertThat(AddressNumber.of(123, "ä").value()).isEqualTo("123ä");
+        assertThat(AddressNumber.of(123, "ö").value()).isEqualTo("123ö");
     }
 
     @Test
@@ -43,13 +46,16 @@ public class AddressNumberTest {
 
     @Test
     void double_address_numbers_can_also_have_extra_letters() {
-        var an = AddressNumber.of(10, "a", 12, "b");
-        assertThat(an.value()).isEqualTo("10a–12b");
+        assertThat(AddressNumber.of(10, "z", 12, "å").value()).isEqualTo("10z–12å");
+        assertThat(AddressNumber.of(10, "ä", 12, "ö").value()).isEqualTo("10ä–12ö");
     }
 
     @Test
     void address_letters_are_converted_to_lowercase() {
         assertThat(AddressNumber.of(123, "A").value()).isEqualTo("123a");
+        assertThat(AddressNumber.of(123, "Å").value()).isEqualTo("123å");
+        assertThat(AddressNumber.of(123, "Ä").value()).isEqualTo("123ä");
+        assertThat(AddressNumber.of(123, "Ö").value()).isEqualTo("123ö");
         assertThat(AddressNumber.of(10, "A", 12, "B").value()).isEqualTo("10a–12b");
     }
 
@@ -93,6 +99,7 @@ public class AddressNumberTest {
         assertThat(AddressNumber.fromString("10a–12").value()).isEqualTo("10a–12");
         assertThat(AddressNumber.fromString("10–12b").value()).isEqualTo("10–12b");
         assertThat(AddressNumber.fromString("10a–12b").value()).isEqualTo("10a–12b");
+        assertThat(AddressNumber.fromString("10å–12ö").value()).isEqualTo("10å–12ö");
     }
 
     @Test
@@ -113,6 +120,7 @@ public class AddressNumberTest {
     @Test
     void fromString_converts_uppercase_to_lowercase() {
         assertThat(AddressNumber.fromString("10A–12B").value()).isEqualTo("10a–12b");
+        assertThat(AddressNumber.fromString("10Å–12Ö").value()).isEqualTo("10å–12ö");
     }
 
     @Test
