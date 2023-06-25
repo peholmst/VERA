@@ -31,8 +31,8 @@ import java.util.Map;
  *   <li>sv: adressnamn n</li>
  *   <li>en: address name</li>
  * </ul>
- * <p>"tien, kadun tai aukion nimi tai muu sovittu nimi"</p>
- * <p>"muu sovittu osoitenimi voi olla esimerkiksi saaren nimi."</p>
+ * <p><strong>tien, kadun tai aukion nimi tai muu sovittu nimi</strong></p>
+ * <p>Muu sovittu osoitenimi voi olla esimerkiksi saaren nimi.</p>
  */
 public final class AddressName extends MultilingualString {
     /**
