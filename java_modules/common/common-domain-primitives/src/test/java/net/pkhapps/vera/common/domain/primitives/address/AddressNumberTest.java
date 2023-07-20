@@ -138,4 +138,14 @@ public class AddressNumberTest {
         assertThatThrownBy(() -> AddressNumber.fromString("123456")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> AddressNumber.fromString("123456a")).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void address_number_is_a_value_object() {
+        var an1 = AddressNumber.of(123);
+        var an2 = AddressNumber.of(123);
+
+        assertThat(an1).isNotSameAs(an2);
+        assertThat(an1).isEqualTo(an2);
+        assertThat(an1.hashCode()).isEqualTo(an2.hashCode());
+    }
 }

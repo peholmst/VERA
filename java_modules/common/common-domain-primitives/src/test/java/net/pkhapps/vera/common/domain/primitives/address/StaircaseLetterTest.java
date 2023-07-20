@@ -52,4 +52,14 @@ public class StaircaseLetterTest {
     void fromString_accepts_null() {
         assertThat(StaircaseLetter.fromString(null)).isNull();
     }
+
+    @Test
+    void staircase_letter_is_a_value_object() {
+        var sl1 = StaircaseLetter.of('A');
+        var sl2 = StaircaseLetter.of('A');
+
+        assertThat(sl1).isNotSameAs(sl2);
+        assertThat(sl1).isEqualTo(sl2);
+        assertThat(sl1.hashCode()).isEqualTo(sl2.hashCode());
+    }
 }
