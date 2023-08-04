@@ -15,6 +15,8 @@
  */
 package net.pkhapps.vera.common.domain.primitives.geo;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
@@ -30,7 +32,7 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
     private final double value;
     private final CoordinateUnit unit;
 
-    private Coordinate(double value, CoordinateUnit unit) {
+    private Coordinate(double value, @NotNull CoordinateUnit unit) {
         requireNonNull(unit, "unit must not be null");
         this.value = value;
         this.unit = unit;
@@ -46,7 +48,7 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
     /**
      * The unit of the coordinate.
      */
-    public CoordinateUnit unit() {
+    public @NotNull CoordinateUnit unit() {
         return unit;
     }
 
@@ -75,7 +77,7 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
      */
     public static final class Longitude extends Coordinate {
 
-        private Longitude(double value, CoordinateUnit unit) {
+        private Longitude(double value, @NotNull CoordinateUnit unit) {
             super(value, unit);
         }
     }
@@ -87,30 +89,32 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
      */
     public static final class Latitude extends Coordinate {
 
-        private Latitude(double value, CoordinateUnit unit) {
+        private Latitude(double value, @NotNull CoordinateUnit unit) {
             super(value, unit);
         }
     }
 
     /**
-     * Creates a new longitude (X-axis) coordinate.
+     * Creates a new longitude (X-axis / east-west) coordinate.
      *
      * @param value the value of the coordinate.
      * @param unit  the unit of the coordinate, never {@code null}.
      * @return a new {@code Longitude} object.
+     * @see CoordinateUnit#longitude(double) 
      */
-    public static Longitude longitude(double value, CoordinateUnit unit) {
+    public static @NotNull Longitude longitude(double value, @NotNull CoordinateUnit unit) {
         return new Longitude(value, unit);
     }
 
     /**
-     * Creates a new latitude (Y-axis) coordinate.
+     * Creates a new latitude (Y-axis / north-south) coordinate.
      *
      * @param value the value of the coordinate.
      * @param unit  the unit of the coordinate, never {@code null}.
      * @return a new {@code Latitude} object.
+     * @see CoordinateUnit#latitude(double)
      */
-    public static Latitude latitude(double value, CoordinateUnit unit) {
+    public static @NotNull Latitude latitude(double value, @NotNull CoordinateUnit unit) {
         return new Latitude(value, unit);
     }
 }

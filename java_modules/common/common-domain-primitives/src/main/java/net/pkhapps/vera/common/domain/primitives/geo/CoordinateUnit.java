@@ -27,4 +27,24 @@ public interface CoordinateUnit {
      * The human-readable symbol for the unit (language agnostic).
      */
     @NotNull String symbol();
+
+    /**
+     * Creates a new longitude (X-axis / east-west) coordinate.
+     *
+     * @param value the value of the coordinate.
+     * @return a new {@code Longitude} object.
+     */
+    default @NotNull Coordinate.Longitude longitude(double value) {
+        return Coordinate.longitude(value, this);
+    }
+
+    /**
+     * Creates a new latitude (Y-axis / north-south) coordinate.
+     *
+     * @param value the value of the coordinate.
+     * @return a new {@code Latitude} object.
+     */
+    default @NotNull Coordinate.Latitude latitude(double value) {
+        return Coordinate.latitude(value, this);
+    }
 }

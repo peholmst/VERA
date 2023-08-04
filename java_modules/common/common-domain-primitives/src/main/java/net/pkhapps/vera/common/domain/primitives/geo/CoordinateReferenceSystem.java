@@ -68,6 +68,6 @@ public interface CoordinateReferenceSystem {
      * @throws IllegalArgumentException if any of the coordinates are out of bounds.
      */
     default @NotNull Location createLocation(double longitude, double latitude) {
-        return new Location(this, Coordinate.Longitude.longitude(longitude, unit()), Coordinate.latitude(latitude, unit()));
+        return Location.of(this, unit().longitude(longitude), unit().latitude(latitude));
     }
 }
