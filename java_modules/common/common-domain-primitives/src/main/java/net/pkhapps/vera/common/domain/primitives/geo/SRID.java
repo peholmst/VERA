@@ -21,8 +21,6 @@ import java.util.Objects;
 
 /**
  * Value object representing a Spatial Reference System Identifier.
- *
- * @author Petter Holmström
  */
 public final class SRID {
 
