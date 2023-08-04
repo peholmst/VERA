@@ -17,6 +17,7 @@ package net.pkhapps.vera.common.domain.primitives.geo;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
@@ -62,12 +63,12 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, unit);
+        return Objects.hash(getClass(), value, unit);
     }
 
     @Override
     public String toString() {
-        return "%s{value=%f, unit=%s}".formatted(getClass().getSimpleName(), value, unit);
+        return String.format(Locale.ROOT, "%s{%f%s}", getClass().getSimpleName(), value, unit.symbol());
     }
 
     /**
