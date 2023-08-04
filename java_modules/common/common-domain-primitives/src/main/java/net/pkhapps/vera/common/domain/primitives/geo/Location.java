@@ -15,6 +15,8 @@
  */
 package net.pkhapps.vera.common.domain.primitives.geo;
 
+import org.jetbrains.annotations.NotNull;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -24,12 +26,11 @@ import static java.util.Objects.requireNonNull;
  * @param crs       the CRS of the coordinates denoting the location.
  * @param longitude the longitude (X-coordinate).
  * @param latitude  the latitude (Y-coordinate).
- * @author Petter Holmström
  */
 public record Location(
-        CoordinateReferenceSystem crs,
-        Coordinate.Longitude longitude,
-        Coordinate.Latitude latitude) {
+        @NotNull CoordinateReferenceSystem crs,
+        @NotNull Coordinate.Longitude longitude,
+        @NotNull Coordinate.Latitude latitude) {
 
     /**
      * Creates a new {@code Location}.

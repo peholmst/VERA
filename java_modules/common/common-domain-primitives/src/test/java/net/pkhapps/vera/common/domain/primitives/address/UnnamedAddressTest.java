@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class UnnamedAddressTest {
 
-    private final Location location = CoordinateReferenceSystems.ETRS_TM35FIN.createLocation(230905, 6686386);
+    private final Location location = CoordinateReferenceSystems.ETRS89_TM35FIN.createLocation(230905, 6686386);
     private final MunicipalityCode municipality = MunicipalityCode.of(445);
     private final Description description = Description.of("Grund nordöst om Mise");
 

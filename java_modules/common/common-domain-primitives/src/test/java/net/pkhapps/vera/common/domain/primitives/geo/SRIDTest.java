@@ -24,43 +24,43 @@ public class SRIDTest {
 
     @Test
     void srids_cannot_be_below_minimum() {
-        assertThatThrownBy(() -> new SRID(SRID.MIN - 1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> SRID.of(SRID.MIN - 1)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void srids_cannot_be_above_maximum() {
-        assertThatThrownBy(() -> new SRID(SRID.MAX + 1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> SRID.of(SRID.MAX + 1)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void minimum_srid_can_be_created() {
-        assertThat(new SRID(SRID.MIN).value()).isEqualTo(SRID.MIN);
+        assertThat(SRID.of(SRID.MIN).value()).isEqualTo(SRID.MIN);
     }
 
     @Test
     void maximum_srid_can_be_created() {
-        assertThat(new SRID(SRID.MAX).value()).isEqualTo(SRID.MAX);
+        assertThat(SRID.of(SRID.MAX).value()).isEqualTo(SRID.MAX);
     }
 
     @Test
     void srids_with_same_value_are_considered_equal() {
-        var srid1 = new SRID(4326);
-        var srid2 = new SRID(4326);
+        var srid1 = SRID.of(4326);
+        var srid2 = SRID.of(4326);
         assertThat(srid1).isEqualTo(srid2);
         assertThat(srid1.hashCode()).isEqualTo(srid2.hashCode());
     }
 
     @Test
     void srids_with_different_values_are_not_considered_equal() {
-        var srid1 = new SRID(4326);
-        var srid2 = new SRID(26717);
+        var srid1 = SRID.of(4326);
+        var srid2 = SRID.of(26717);
         assertThat(srid1).isNotEqualTo(srid2);
         assertThat(srid1.hashCode()).isNotEqualTo(srid2.hashCode());
     }
 
     @Test
     void toString_has_been_overridden() {
-        var srid = new SRID(4326);
+        var srid = SRID.of(4326);
         assertThat(srid.toString()).isEqualTo("SRID{4326}");
     }
 }

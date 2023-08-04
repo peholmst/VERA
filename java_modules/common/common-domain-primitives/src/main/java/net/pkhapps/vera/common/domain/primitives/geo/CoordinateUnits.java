@@ -15,6 +15,8 @@
  */
 package net.pkhapps.vera.common.domain.primitives.geo;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Enumeration of common coordinate units used in VERA.
  */
@@ -25,12 +27,12 @@ public enum CoordinateUnits implements CoordinateUnit {
 
 	private final String symbol;
 
-    CoordinateUnits(String symbol) {
+	CoordinateUnits(@NotNull String symbol) {
         this.symbol = symbol;
     }
 
 	@Override
-	public String symbol() {
+	public @NotNull String symbol() {
 		return symbol;
 	}
 }

@@ -15,16 +15,16 @@
  */
 package net.pkhapps.vera.common.domain.primitives.geo;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Interface defining a coordinate unit (such as meters or degrees). Implementations can use enums, singletons or
  * anonymous classes.
- *
- * @author Petter Holmström
  */
 public interface CoordinateUnit {
 
     /**
      * The human-readable symbol for the unit (language agnostic).
      */
-    String symbol();
+    @NotNull String symbol();
 }

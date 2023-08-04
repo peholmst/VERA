@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RoadJunctionTest {
 
-    private final Location location = CoordinateReferenceSystems.ETRS_TM35FIN.createLocation(240479, 6694823);
+    private final Location location = CoordinateReferenceSystems.ETRS89_TM35FIN.createLocation(240479, 6694823);
     private final MunicipalityCode municipality = MunicipalityCode.of(445);
     private final AddressName firstRoad = AddressName.bilingual("Saaristotie", "Skärgårdsvägen");
     private final AddressName secondRoad = AddressName.bilingual("Vapparintie", "Vapparvägen");

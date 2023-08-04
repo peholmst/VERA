@@ -15,6 +15,8 @@
  */
 package net.pkhapps.vera.common.domain.primitives.geo;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Objects;
 
 /**
@@ -35,13 +37,8 @@ public final class SRID {
 
     private final int value;
 
-    /**
-     * Creates a new {@code SRID}.
-     *
-     * @param srid the numeric SRID value.
-     * @throws IllegalArgumentException if the numeric SRID value is invalid.
-     */
-    public SRID(int srid) {
+
+    private SRID(int srid) {
         if (srid < MIN) {
             throw new IllegalArgumentException("SRID cannot be less than " + MIN);
         }
@@ -49,6 +46,16 @@ public final class SRID {
             throw new IllegalArgumentException("SRID cannot be greater than " + MAX);
         }
         this.value = srid;
+    }
+
+    /**
+     * Creates a new {@code SRID}.
+     *
+     * @param srid the numeric SRID value.
+     * @throws IllegalArgumentException if the numeric SRID value is invalid.
+     */
+    public static @NotNull SRID of(int srid) {
+        return new SRID(srid);
     }
 
     /**

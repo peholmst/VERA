@@ -15,6 +15,8 @@
  */
 package net.pkhapps.vera.common.domain.primitives.geo;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Interface describing a Coordinate Reference System (CRS) or Spatial Reference System (SRS). The interface is not
  * intended to be a complete definition of a CRS as would be used in a dedicated GIS. Rather, the interface is defined
@@ -23,25 +25,49 @@ package net.pkhapps.vera.common.domain.primitives.geo;
 public interface CoordinateReferenceSystem {
 
     /**
+     * Checks if the given coordinate is valid within the context of this CRS.
+     *
+     * @param coordinate the coordinate to validate, never {@code null}.
+     * @return true if the coordinate is valid, false if not.
+     */
+    boolean isCoordinateValid(@NotNull Coordinate coordinate);
+
+    /**
      * Checks if the given coordinate is valid within the context of this CRS and throws an exception if not.
      *
      * @param coordinate the coordinate to validate, never {@code null}.
      * @throws IllegalArgumentException if the coordinate is invalid.
      */
-    void validateCoordinate(Coordinate coordinate);
+    default void validateCoordinate(@NotNull Coordinate coordinate) {
+        if (!isCoordinateValid(coordinate)) {
+            throw new IllegalArgumentException("Coordinate is not valid");
+        }
+    }
 
     /**
      * The unit of the coordinates in this CRS.
      */
-    CoordinateUnit unit();
+    @NotNull CoordinateUnit unit();
 
     /**
      * The SRID of this CRS.
      */
-    SRID srid();
+    @NotNull SRID srid();
 
     /**
      * The human-readable name of this CRS.
      */
-    String name();
+    @NotNull String name();
+
+    /**
+     * Creates a new {@link Location} with the given coordinates in this CRS.
+     *
+     * @param longitude the longitude coordinate (east-west) in the {@link #unit()} of this CRS.
+     * @param latitude  the latitude coordinate (north-south) in the {@link #unit()} of this CRS.
+     * @return a new {@link Location}.
+     * @throws IllegalArgumentException if any of the coordinates are out of bounds.
+     */
+    default @NotNull Location createLocation(double longitude, double latitude) {
+        return new Location(this, Coordinate.Longitude.longitude(longitude, unit()), Coordinate.latitude(latitude, unit()));
+    }
 }

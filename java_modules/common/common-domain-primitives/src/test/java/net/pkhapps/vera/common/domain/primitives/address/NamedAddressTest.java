@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class NamedAddressTest {
 
-    private final Location location = CoordinateReferenceSystems.ETRS_TM35FIN.createLocation(240471, 6694823);
+    private final Location location = CoordinateReferenceSystems.ETRS89_TM35FIN.createLocation(240471, 6694823);
     private final MunicipalityCode municipality = MunicipalityCode.of(445);
     private final AddressName name = AddressName.bilingual("Saaristotie", "Skärgårdsvägen");
     private final Description description = Description.of("A description");
