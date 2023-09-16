@@ -1,4 +1,4 @@
-# VERA Dispatcher Server - Blocking or non-blocking API (PENDING)
+# VERA Dispatcher Server - Blocking or non-blocking API (DONE)
 
 Created on: 2023-07-20
 
@@ -25,6 +25,7 @@ Decide whether the API of VERA Dispatcher Server is going to be blocking or non-
 
 * More performant and resource efficient than a blocking design.
 * A good opportunity to learn how to write non-blocking APIs.
+* A non-blocking API can be turned into a blocking one, but not the other way around.
 
 *Cons*:
 
@@ -37,7 +38,10 @@ Decide whether the API of VERA Dispatcher Server is going to be blocking or non-
 * Changing this decision after any code has been written is going to be expensive so once the decision has been made, we have to stick to it.
 * GraalVM may impose restrictions on what libraries you can use to write non-blocking code.
 * If the database and other external services are blocking, it does not really matter if the rest of the application is non-blocking - there will still be a blocking bottleneck.
+* Both Quarkus and Spring are going in the reactive direction, which means there is plenty of framework support for building reactive (non-blocking) applications out there.
 
 ## Decision
 
-No decision has been made yet.
+Decided on: 2023-09-16
+
+**The API will be non-blocking.** The Java primitives for doing reactive programming are not enough, so a third-party library will be needed. This is a separate decision. When making a decision about which database to use, non-blocking support should be an important factor to consider.
