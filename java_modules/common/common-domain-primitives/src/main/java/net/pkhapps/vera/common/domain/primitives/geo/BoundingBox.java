@@ -60,7 +60,6 @@ public final class BoundingBox {
         crs.validatePoint(upperCorner);
     }
 
-
     /**
      * The CRS of the bounding box.
      */
@@ -80,6 +79,20 @@ public final class BoundingBox {
      */
     public @NotNull Point lowerCorner() {
         return lowerCorner;
+    }
+
+    /**
+     * The width of the bounding box.
+     */
+    public @NotNull Dimension width() {
+        return crs.unit().dimension(upperCorner.longitude().value() - lowerCorner.longitude().value());
+    }
+
+    /**
+     * The height of the bounding box.
+     */
+    public @NotNull Dimension height() {
+        return crs.unit().dimension(upperCorner.latitude().value() - lowerCorner.latitude().value());
     }
 
     /**

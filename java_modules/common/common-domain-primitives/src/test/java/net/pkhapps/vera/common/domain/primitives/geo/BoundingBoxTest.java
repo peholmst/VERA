@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BoundingBoxTest {
 
@@ -37,7 +38,16 @@ public class BoundingBoxTest {
         bbs.forEach(bb -> {
             assertThat(bb.lowerCorner()).isEqualTo(Point.of(CoordinateUnits.DEGREE, 0, 0));
             assertThat(bb.upperCorner()).isEqualTo(Point.of(CoordinateUnits.DEGREE, 1, 1));
+            assertThat(bb.crs()).isEqualTo(CoordinateReferenceSystems.WGS84);
         });
+    }
+
+    @Test
+    void coordinates_must_be_valid() {
+        assertThatThrownBy(() -> BoundingBox.of(CoordinateReferenceSystems.WGS84,
+                CoordinateUnits.METER.point(240106, 6697275),
+                CoordinateUnits.DEGREE.point(0, 0))
+        ).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -62,4 +72,23 @@ public class BoundingBoxTest {
         var bb = BoundingBox.of(crs, p1, p2);
         assertThat(bb.toString()).isEqualTo("BoundingBox{crs=3067, lowerCorner=Point{lon=240106.000m, lat=6697275.000m}, upperCorner=Point{lon=240110.000m, lat=6697280.000m}}");
     }
+
+    @Test
+    void width_can_be_calculated() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+        assertThat(bb.width()).isEqualTo(CoordinateUnits.METER.dimension(4));
+    }
+
+    @Test
+    void height_can_be_calculated() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+        assertThat(bb.height()).isEqualTo(CoordinateUnits.METER.dimension(5));
+    }
+
 }

@@ -42,6 +42,13 @@ public sealed class Point permits Location {
     }
 
     /**
+     * The unit of the coordinates.
+     */
+    public @NotNull CoordinateUnit unit() {
+        return longitude.unit();
+    }
+
+    /**
      * The longitude (X-coordinate).
      */
     public @NotNull Coordinate.Longitude longitude() {
@@ -77,6 +84,24 @@ public sealed class Point permits Location {
      */
     public static @NotNull Point of(CoordinateUnit unit, double longitude, double latitude) {
         return of(Coordinate.longitude(longitude, unit), Coordinate.latitude(latitude, unit));
+    }
+
+    /**
+     * Returns the distance to the given destination point, as calculated on a Cartesian plane. This means
+     * that the result will be incorrect for long distances where the earth's curvature would have to be taken
+     * into account.
+     *
+     * @param destination the point to calculate the distance to, never {@code null}.
+     * @return the distance between the two points.
+     */
+    public @NotNull Dimension distanceTo(@NotNull Point destination) {
+        if (!destination.unit().equals(unit())) {
+            throw new IllegalArgumentException("Points must have the same unit");
+        }
+        var a2 = Math.pow(longitude().value() - destination.longitude.value(), 2);
+        var b2 = Math.pow(latitude().value() - destination.latitude().value(), 2);
+        var c = Math.sqrt(a2 + b2);
+        return Dimension.of(c, unit());
     }
 
     @Override

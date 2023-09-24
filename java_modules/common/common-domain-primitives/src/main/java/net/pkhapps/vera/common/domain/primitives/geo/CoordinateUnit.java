@@ -58,4 +58,14 @@ public interface CoordinateUnit {
     default @NotNull Point point(double longitude, double latitude) {
         return Point.of(this, longitude, latitude);
     }
+
+    /**
+     * Creates a new dimension.
+     *
+     * @param value the magnitude of the dimension.
+     * @return a new {@code Dimension} object.
+     */
+    default @NotNull Dimension dimension(double value) {
+        return Dimension.of(value, this);
+    }
 }
