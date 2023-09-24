@@ -74,21 +74,12 @@ public class BoundingBoxTest {
     }
 
     @Test
-    void width_can_be_calculated() {
+    void dimensions_can_be_calculated() {
         var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
         var p1 = CoordinateUnits.METER.point(240106, 6697275);
         var p2 = CoordinateUnits.METER.point(240110, 6697280);
         var bb = BoundingBox.of(crs, p1, p2);
-        assertThat(bb.width()).isEqualTo(CoordinateUnits.METER.dimension(4));
+        assertThat(bb.dimensions().width()).isEqualTo(CoordinateUnits.METER.dimension(4));
+        assertThat(bb.dimensions().height()).isEqualTo(CoordinateUnits.METER.dimension(5));
     }
-
-    @Test
-    void height_can_be_calculated() {
-        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
-        var p1 = CoordinateUnits.METER.point(240106, 6697275);
-        var p2 = CoordinateUnits.METER.point(240110, 6697280);
-        var bb = BoundingBox.of(crs, p1, p2);
-        assertThat(bb.height()).isEqualTo(CoordinateUnits.METER.dimension(5));
-    }
-
 }

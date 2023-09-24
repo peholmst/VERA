@@ -31,6 +31,7 @@ public final class BoundingBox {
     private final CoordinateReferenceSystem crs;
     private final Point lowerCorner;
     private final Point upperCorner;
+    private final Dimension2D dimensions;
 
     private BoundingBox(@NotNull CoordinateReferenceSystem crs,
                         @NotNull Coordinate.Longitude x1,
@@ -58,6 +59,11 @@ public final class BoundingBox {
 
         crs.validatePoint(lowerCorner);
         crs.validatePoint(upperCorner);
+
+        dimensions = Dimension2D.of(crs.unit(),
+                upperCorner.longitude().value() - lowerCorner.longitude().value(),
+                upperCorner.latitude().value() - lowerCorner.latitude().value()
+        );
     }
 
     /**
@@ -82,17 +88,10 @@ public final class BoundingBox {
     }
 
     /**
-     * The width of the bounding box.
+     * The dimensions of the bounding box.
      */
-    public @NotNull Dimension width() {
-        return crs.unit().dimension(upperCorner.longitude().value() - lowerCorner.longitude().value());
-    }
-
-    /**
-     * The height of the bounding box.
-     */
-    public @NotNull Dimension height() {
-        return crs.unit().dimension(upperCorner.latitude().value() - lowerCorner.latitude().value());
+    public @NotNull Dimension2D dimensions() {
+        return dimensions;
     }
 
     /**
