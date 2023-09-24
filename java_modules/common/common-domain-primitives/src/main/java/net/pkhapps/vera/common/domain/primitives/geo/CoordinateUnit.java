@@ -47,4 +47,15 @@ public interface CoordinateUnit {
     default @NotNull Coordinate.Latitude latitude(double value) {
         return Coordinate.latitude(value, this);
     }
+
+    /**
+     * Creates a new point.
+     *
+     * @param longitude the longitude (X-axis / east-west) coordinate.
+     * @param latitude  the latitude (Y-axis / north-south) coordinate.
+     * @return a new {@code Point} object.
+     */
+    default @NotNull Point point(double longitude, double latitude) {
+        return Point.of(this, longitude, latitude);
+    }
 }

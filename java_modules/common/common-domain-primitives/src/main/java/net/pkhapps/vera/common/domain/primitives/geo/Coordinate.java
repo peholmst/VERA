@@ -76,10 +76,15 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
      *
      * @see #longitude(double, CoordinateUnit)
      */
-    public static final class Longitude extends Coordinate {
+    public static final class Longitude extends Coordinate implements Comparable<Longitude> {
 
         private Longitude(double value, @NotNull CoordinateUnit unit) {
             super(value, unit);
+        }
+
+        @Override
+        public int compareTo(@NotNull Coordinate.Longitude o) {
+            return Double.compare(value(), o.value());
         }
     }
 
@@ -88,10 +93,15 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
      *
      * @see #latitude(double, CoordinateUnit)
      */
-    public static final class Latitude extends Coordinate {
+    public static final class Latitude extends Coordinate implements Comparable<Latitude> {
 
         private Latitude(double value, @NotNull CoordinateUnit unit) {
             super(value, unit);
+        }
+
+        @Override
+        public int compareTo(@NotNull Coordinate.Latitude o) {
+            return Double.compare(value(), o.value());
         }
     }
 

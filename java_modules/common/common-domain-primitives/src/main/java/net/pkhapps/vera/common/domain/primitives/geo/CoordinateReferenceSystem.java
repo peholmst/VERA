@@ -45,6 +45,28 @@ public interface CoordinateReferenceSystem {
     }
 
     /**
+     * Checks if the given point is valid within the context of this CRS.
+     *
+     * @param point the point to validate, never {@code null}.
+     * @return true if the point is valid, false if not.
+     */
+    default boolean isPointValid(@NotNull Point point) {
+        return isCoordinateValid(point.longitude()) && isCoordinateValid(point.latitude());
+    }
+
+    /**
+     * Checks if the given point is valid within the context of this CRS and throws an exception if not.
+     *
+     * @param point the point to validate, never {@code null}.
+     * @throws IllegalArgumentException if the point is invalid.
+     */
+    default void validatePoint(@NotNull Point point) {
+        if (!isPointValid(point)) {
+            throw new IllegalArgumentException("Point is not valid");
+        }
+    }
+
+    /**
      * The unit of the coordinates in this CRS.
      */
     @NotNull CoordinateUnit unit();
