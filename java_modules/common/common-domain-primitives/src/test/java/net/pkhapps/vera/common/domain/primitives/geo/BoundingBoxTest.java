@@ -82,4 +82,71 @@ public class BoundingBoxTest {
         assertThat(bb.dimensions().width()).isEqualTo(CoordinateUnits.METER.dimension(4));
         assertThat(bb.dimensions().height()).isEqualTo(CoordinateUnits.METER.dimension(5));
     }
+
+    @Test
+    void bounding_box_knows_which_points_are_inside() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+
+        assertThat(bb.contains(CoordinateUnits.METER.point(240108, 6697276))).isTrue();
+    }
+
+    @Test
+    void bounding_box_knows_which_points_are_outside() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+        assertThat(bb.contains(CoordinateUnits.METER.point(240105, 6697276))).isFalse();
+        assertThat(bb.contains(CoordinateUnits.METER.point(240111, 6697276))).isFalse();
+        assertThat(bb.contains(CoordinateUnits.METER.point(240108, 6697274))).isFalse();
+        assertThat(bb.contains(CoordinateUnits.METER.point(240108, 6697281))).isFalse();
+    }
+
+    @Test
+    void a_point_in_the_corners_is_inside_the_box() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+
+        assertThat(bb.contains(p1)).isTrue();
+        assertThat(bb.contains(p2)).isTrue();
+    }
+
+    @Test
+    void units_must_be_equal_when_checking_a_point() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+
+        assertThatThrownBy(() -> bb.contains(CoordinateUnits.DEGREE.point(240108, 6697276))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void bounding_box_knows_whether_another_bounding_box_is_inside_it() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240100, 6697270);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var p3 = CoordinateUnits.METER.point(240102, 6697272);
+        var p4 = CoordinateUnits.METER.point(240108, 6697278);
+        var outer = BoundingBox.of(crs, p1, p2);
+        var inner = BoundingBox.of(crs, p3, p4);
+
+        assertThat(outer.contains(inner)).isTrue();
+        assertThat(inner.contains(outer)).isFalse();
+    }
+
+    @Test
+    void a_bounding_box_contains_itself() {
+        var crs = CoordinateReferenceSystems.ETRS89_TM35FIN;
+        var p1 = CoordinateUnits.METER.point(240106, 6697275);
+        var p2 = CoordinateUnits.METER.point(240110, 6697280);
+        var bb = BoundingBox.of(crs, p1, p2);
+
+        assertThat(bb.contains(bb)).isTrue();
+    }
 }

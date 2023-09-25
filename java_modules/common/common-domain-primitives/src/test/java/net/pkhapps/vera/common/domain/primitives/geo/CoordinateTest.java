@@ -19,6 +19,7 @@ package net.pkhapps.vera.common.domain.primitives.geo;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CoordinateTest {
 
@@ -58,5 +59,41 @@ public class CoordinateTest {
 
         assertThat(c1.toString()).isEqualTo("Latitude{49.530000°}");
         assertThat(c2.toString()).isEqualTo("Longitude{-23.450000m}");
+    }
+
+    @Test
+    void latitudes_can_be_compared() {
+        var c1 = Coordinate.latitude(5, CoordinateUnits.DEGREE);
+        var c2 = Coordinate.latitude(-5, CoordinateUnits.DEGREE);
+        assertThat(c2).isLessThan(c1);
+        assertThat(c1).isGreaterThan(c2);
+        assertThat(c1).isEqualByComparingTo(c1);
+        assertThat(c2).isEqualByComparingTo(c2);
+    }
+
+    @Test
+    void latitudes_must_have_same_unit_when_comparing() {
+        var c1 = Coordinate.latitude(5, CoordinateUnits.DEGREE);
+        var c2 = Coordinate.latitude(-5, CoordinateUnits.METER);
+        assertThatThrownBy(() -> c1.compareTo(c2)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> c2.compareTo(c1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void longitudes_can_be_compared() {
+        var c1 = Coordinate.longitude(5, CoordinateUnits.DEGREE);
+        var c2 = Coordinate.longitude(-5, CoordinateUnits.DEGREE);
+        assertThat(c2).isLessThan(c1);
+        assertThat(c1).isGreaterThan(c2);
+        assertThat(c1).isEqualByComparingTo(c1);
+        assertThat(c2).isEqualByComparingTo(c2);
+    }
+
+    @Test
+    void longitudes_must_have_same_unit_when_comparing() {
+        var c1 = Coordinate.longitude(5, CoordinateUnits.DEGREE);
+        var c2 = Coordinate.longitude(-5, CoordinateUnits.METER);
+        assertThatThrownBy(() -> c1.compareTo(c2)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> c2.compareTo(c1)).isInstanceOf(IllegalArgumentException.class);
     }
 }

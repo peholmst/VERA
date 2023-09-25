@@ -84,6 +84,9 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
 
         @Override
         public int compareTo(@NotNull Coordinate.Longitude o) {
+            if (!unit().equals(o.unit())) {
+                throw new IllegalArgumentException("Coordinates must have the same unit");
+            }
             return Double.compare(value(), o.value());
         }
     }
@@ -101,6 +104,9 @@ public abstract sealed class Coordinate permits Coordinate.Longitude, Coordinate
 
         @Override
         public int compareTo(@NotNull Coordinate.Latitude o) {
+            if (!unit().equals(o.unit())) {
+                throw new IllegalArgumentException("Coordinates must have the same unit");
+            }
             return Double.compare(value(), o.value());
         }
     }

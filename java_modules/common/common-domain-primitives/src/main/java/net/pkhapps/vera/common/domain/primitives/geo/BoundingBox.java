@@ -95,6 +95,29 @@ public final class BoundingBox {
     }
 
     /**
+     * Checks if the given point is contained inside this bounding box.
+     *
+     * @param point the point to check, never {@code null}.
+     * @return true if the point is inside this box, false otherwise.
+     */
+    public boolean contains(@NotNull Point point) {
+        return lowerCorner.longitude().compareTo(point.longitude()) <= 0
+                && lowerCorner.latitude().compareTo(point.latitude()) <= 0
+                && upperCorner.longitude().compareTo(point.longitude()) >= 0
+                && upperCorner.latitude().compareTo(point.latitude()) >= 0;
+    }
+
+    /**
+     * Checks if the given bounding box is contained inside this bounding box.
+     *
+     * @param boundingBox the bounding box to check, never {@code null}.
+     * @return true if the bounding box is inside this box, false otherwise.
+     */
+    public boolean contains(@NotNull BoundingBox boundingBox) {
+        return contains(boundingBox.lowerCorner) && contains(boundingBox.upperCorner);
+    }
+
+    /**
      * Creates a new {@code BoundingBox}.
      *
      * @param crs  the CRS of the bounding box, never {@code null}.
