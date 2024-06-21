@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ResourceIdTest {
 
@@ -36,28 +35,6 @@ public class ResourceIdTest {
         var inputString = "M60QwA4vl9Si6Jr9SLzP2";
         var id = ResourceId.fromString(inputString);
         assertThat(id.toString()).isEqualTo(inputString);
-    }
-
-    @Test
-    void resourceId_strings_must_be_21_characters_long() {
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP2z")).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void resourceId_strings_must_not_contain_illegal_characters() {
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP<")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP>")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP$")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzPÅ")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP:")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP/")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP(")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP)")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP\\")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP.")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP\"")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ResourceId.fromString("M60QwA4vl9Si6Jr9SLzP'")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

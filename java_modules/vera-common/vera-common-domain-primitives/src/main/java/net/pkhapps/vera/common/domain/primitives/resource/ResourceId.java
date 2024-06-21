@@ -16,55 +16,22 @@
 
 package net.pkhapps.vera.common.domain.primitives.resource;
 
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import net.pkhapps.vera.common.utils.StringValidationUtils;
+import net.pkhapps.commons.domain.primitives.AbstractNanoId;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
-import static java.util.Objects.requireNonNull;
-
-public final class ResourceId {
-
-    private final String id;
+public final class ResourceId extends AbstractNanoId {
 
     private ResourceId(@NotNull String id) {
-        this.id = requireNonNull(id);
-    }
-
-    @Override
-    @JsonValue
-    public String toString() {
-        return id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ResourceId that = (ResourceId) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
+        super(id);
     }
 
     public static @NotNull ResourceId randomId() {
-        return new ResourceId(NanoIdUtils.randomNanoId());
+        return new ResourceId(randomNanoIdString());
     }
 
     @JsonCreator
     public static @NotNull ResourceId fromString(@NotNull String id) {
-        if (id.length() != NanoIdUtils.DEFAULT_SIZE) {
-            throw new IllegalArgumentException("id has incorrect length");
-        }
-        if (!StringValidationUtils.hasOnlyLegalChars(id, NanoIdUtils.DEFAULT_ALPHABET)) {
-            throw new IllegalArgumentException("id contains illegal characters");
-        }
-        return new ResourceId(id);
+        return new ResourceId(validate(id));
     }
 }

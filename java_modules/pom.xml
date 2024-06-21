@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2023 Petter Holmström
+  ~ Copyright (c) 2023-2024 Petter Holmström
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -37,22 +37,48 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>20</maven.compiler.source>
-        <maven.compiler.target>20</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
         <picocli.version>4.7.3</picocli.version>
-        <spring-boot.version>3.1.0</spring-boot.version>
-        <vaadin.version>24.1.0</vaadin.version>
-        <hazelcast.version>4.2.8</hazelcast.version>
+        <spring-boot.version>3.3.0</spring-boot.version>
+        <vaadin.version>24.4.0.alpha18</vaadin.version>
+        <hazelcast.version>5.3.6</hazelcast.version>
+        <mvvm4vaadin.version>1.0-SNAPSHOT</mvvm4vaadin.version>
+        <jetbrains-annotations.version>24.1.0</jetbrains-annotations.version>
+        <jnanoid.version>2.0.0</jnanoid.version>
+        <pkhapps-common-domain-primitives.version>1.0-SNAPSHOT</pkhapps-common-domain-primitives.version>
     </properties>
 
     <modules>
         <module>common</module>
         <module>dispatcher</module>
+        <module>gis</module>
+        <module>vera-server</module>
+        <module>vera-common</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>${jetbrains-annotations.version}</version>
+        </dependency>
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>net.pkhapps.commons</groupId>
+                <artifactId>common-domain-primitives</artifactId>
+                <version>${pkhapps-common-domain-primitives.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aventrix.jnanoid</groupId>
+                <artifactId>jnanoid</artifactId>
+                <version>${jnanoid.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli</artifactId>
@@ -69,8 +95,14 @@
 
             <dependency>
                 <groupId>com.hazelcast</groupId>
-                <artifactId>hazelcast-all</artifactId>
+                <artifactId>hazelcast-spring</artifactId>
                 <version>${hazelcast.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.pkhapps.mvvm4vaadin</groupId>
+                <artifactId>mvvm4vaadin</artifactId>
+                <version>${mvvm4vaadin.version}</version>
             </dependency>
 
             <!-- Import this BOM last, otherwise we will lose the overrides above (if there are any) -->
@@ -119,7 +151,32 @@
                     <artifactId>vaadin-maven-plugin</artifactId>
                     <version>${vaadin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>1.5.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
+    <repositories>
+        <repository>
+            <id>vaadin-prereleases</id>
+            <url>https://maven.vaadin.com/vaadin-prereleases</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>vaadin-prereleases</id>
+            <url>https://maven.vaadin.com/vaadin-prereleases</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
