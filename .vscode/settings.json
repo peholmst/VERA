@@ -1,8 +1,0 @@
-{
-    "files.exclude": {
-        "grpc": true,
-        "grpc_install": true,
-        "abseil-cpp": true,
-        "abseil-cpp_install": true
-    }
-}

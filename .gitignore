@@ -1,9 +1,0 @@
-# C++ gRPC source and installation directories
-/grpc/
-/grpc_install/
-
-# C++ Abseil source and installation directories
-/abseil-cpp
-/abseil-cpp_install
-
-build/
