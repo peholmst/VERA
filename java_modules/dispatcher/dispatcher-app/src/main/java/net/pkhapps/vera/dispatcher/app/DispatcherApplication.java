@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Petter Holmström
+ * Copyright (c) 2024-2025 Petter Holmström
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.domain.wmts;
+package net.pkhapps.vera.dispatcher.app;
 
-import java.io.Serializable;
 
-/**
- * ID type for {@link TileMatrixSet}.
- */
-public class TileMatrixSetId implements Serializable {
-    // TODO Implement me!
+import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.theme.Theme;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+@Theme("dispatcher-app")
+public class DispatcherApplication implements AppShellConfigurator {
+
+    public static void main(String[] args) {
+        SpringApplication.run(DispatcherApplication.class, args);
+    }
 }

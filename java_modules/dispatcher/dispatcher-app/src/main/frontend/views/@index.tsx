@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Petter Holmström
+ * Copyright (c) 2025 Petter Holmström
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.domain.wmts;
-
-import net.pkhapps.vera.common.domain.base.Repository;
-
-/**
- * Repository interface for {@link TileMatrixSet}.
- */
-public interface TileMatrixSetRepository extends Repository<TileMatrixSetId, TileMatrixSet> {
+export default function MainView() {
+    return <>Main View</>
 }
