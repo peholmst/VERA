@@ -1,4 +1,8 @@
 [workspace]
 resolver = "2"
-members = ["vera-shared-kernel"]
-#, "vera-dispatch-server", "vera-units"]
+members = [
+    "vera-shared-kernel",
+    "vera-station-alert-client",
+    "vera-station-alert-server",
+    "vera-station-alert-shared",
+]

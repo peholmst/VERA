@@ -5,3 +5,8 @@ edition = "2024"
 
 [dependencies]
 vera-station-alert-shared = { path = "../vera-station-alert-shared" }
+sdl2 = "0.37.0"
+anyhow = "1.0.97"
+chrono = "0.4.40"
+log = "0.4.27"
+env_logger = "0.11.8"
