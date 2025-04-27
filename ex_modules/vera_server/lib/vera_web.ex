@@ -13,6 +13,15 @@ defmodule VeraWeb do
     end
   end
 
+  # TODO Explain what this is
+  def verified_routes do
+    quote do
+      use Phoenix.VerifiedRoutes,
+        endpoint: VeraWeb.Endpoint,
+        router: VeraWeb.Router
+    end
+  end
+
   @doc """
   When used, dispatch to the appropriate controller/live_view/etc.
   """
