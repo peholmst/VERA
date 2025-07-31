@@ -5,8 +5,8 @@ use crate::domain::clock::{Clock, SystemClock};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Timestamped<T> {
-    pub data: T,
-    pub timestamp: DateTime<Utc>,
+    data: T,
+    timestamp: DateTime<Utc>,
 }
 
 impl<T> Timestamped<T> {
@@ -37,5 +37,13 @@ impl<T> Timestamped<T> {
             data: f(self.data)?,
             timestamp: self.timestamp,
         })
+    }
+
+    pub fn data(&self) -> &T {
+        &self.data
+    }
+
+    pub fn timestamp(&self) -> &DateTime<Utc> {
+        &self.timestamp
     }
 }
