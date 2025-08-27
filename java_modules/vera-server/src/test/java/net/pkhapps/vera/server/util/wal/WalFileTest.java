@@ -1,0 +1,94 @@
+/*
+ * Copyright (c) 2025 Petter Holmström
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.pkhapps.vera.server.util.wal;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class WalFileTest {
+
+    static Path directory;
+
+    @BeforeAll
+    static void setupAll() throws IOException {
+        directory = Files.createTempDirectory("wal-event-file-test");
+    }
+
+    @AfterAll
+    static void cleanUpAll() throws IOException {
+        try (var paths = Files.walk(directory)) {
+            paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
+    }
+
+    @Test
+    void next_record_number_set_to_default_when_creating_new_file() {
+        try (var file = new WalFile.WritableWalFile(directory.resolve("empty"), 1L)) {
+            assertEquals(1L, file.getNextRecordNumber());
+        }
+    }
+
+    @Test
+    void writing_records_increment_number() {
+        try (var file = new WalFile.WritableWalFile(directory.resolve("increments"), 1L)) {
+            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
+            file.write(20, "world".getBytes(StandardCharsets.UTF_8));
+            assertEquals(3L, file.getNextRecordNumber());
+        }
+    }
+
+    @Test
+    void next_record_number_read_from_existing_file() {
+        try (var file = new WalFile.WritableWalFile(directory.resolve("next_record"), 1L)) {
+            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
+            file.write(20, "world".getBytes(StandardCharsets.UTF_8));
+        }
+        try (var file = new WalFile.WritableWalFile(directory.resolve("next_record"), 1L)) {
+            assertEquals(3L, file.getNextRecordNumber());
+        }
+    }
+
+    @Test
+    void records_can_be_replayed_from_the_beginning() {
+        try (var file = new WalFile.WritableWalFile(directory.resolve("replay"), 1L)) {
+            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
+            file.write(20, "world".getBytes(StandardCharsets.UTF_8));
+
+            var records = new ArrayList<String>();
+            file.replayAll(record -> {
+                var payload = new String(record.payload(), 0, record.payloadLength(), StandardCharsets.UTF_8);
+                records.add("%d:%s:%d".formatted(record.payloadTypeId(), payload, record.recordNumber()));
+            });
+
+            assertEquals(List.of("10:hello:1", "20:world:2"), records);
+        }
+    }
+
+    // TODO Test reading corrupt files
+}
