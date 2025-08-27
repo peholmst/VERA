@@ -24,30 +24,62 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.zip.CRC32C;
 
-// TODO Javadocs
-
+/// Low-level class for accessing a single WAL file.
+///
+/// ### Record Format
+///
+/// A WAL file record has the following format (name, size in bytes):
+///
+/// `[header:20][payload:n][record number:8]`
+///
+/// The record number is at the end to make it easier to find the latest record number when opening an existing file
+/// for writing.
+///
+/// A WAL file record header has the following format (name, size in bytes):
+///
+/// `[magic:4][checksum:8][type:4][length:4]`
+///
+/// * `magic`: always {@value #MAGIC}; acts as a marker for new records.
+/// * `checksum`: a CRC32C checksum of `type`, `length`, `payload`, and `record number`.
+/// * `type`: an integer indicating the type of the payload. The caller decides what integers to use.
+/// * `length`: the length of the payload in bytes.
+///
+/// ### Thread Safety
+///
+/// **This class does not perform any thread-locking at all.** Callers are expected to make sure the proper locks are in
+/// order when clients are writing to, and reading from the WAL.
+///
+/// ### Usage
+///
+/// For reading only, use [#readOnly(Path)].
+///
+/// For writing and reading, use [#writable(Path, long)]
+///
+/// This class has package visibility because it is not intended to be used by clients.
 sealed abstract class WalFile implements AutoCloseable {
 
+    // This code is optimized for performance first, readability second.
+
     private static final Logger log = LoggerFactory.getLogger(WalFile.class);
+
+    /// A magic constant used to mark the beginning of a new record in the WAL.
     static final int MAGIC = 0x57414C30;
 
     protected final Path file;
 
-    public WalFile(Path file) {
+    protected WalFile(Path file) {
         this.file = file;
     }
 
-    protected static long calculateChecksum(int payloadTypeId, byte[] payload, int payloadLength,
+    private static long calculateChecksum(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength,
                                             long recordNumber) {
         var crc = new CRC32C();
         crc.update(payloadTypeId);
         crc.update(payloadLength);
-        crc.update(payload, 0, payloadLength);
+        crc.update(payload, payloadOffset, payloadLength);
         crc.update((int) (recordNumber >>> 56) & 0xFF);
         crc.update((int) (recordNumber >>> 48) & 0xFF);
         crc.update((int) (recordNumber >>> 40) & 0xFF);
@@ -59,85 +91,88 @@ sealed abstract class WalFile implements AutoCloseable {
         return crc.getValue();
     }
 
-    protected abstract void doWithReadLock(Runnable runnable);
-
+    /// Replays all records in the WAL from start to end, calling the given `consumer` for each record.
+    ///
+    /// The consumer is called synchronously. If the replay needs to be fast, so does the consumer.
+    ///
+    /// @param consumer the consumer to call for each record
+    /// @throws WriteAheadLogException if there is an error replaying the WAL
     public void replayAll(Consumer<WalRecord> consumer) {
+        final long startTimeMillis = System.currentTimeMillis();
         log.info("Replaying all records");
-        doWithReadLock(() -> {
-            int recordsReplayed = 0;
-            try (var readChannel = FileChannel.open(file, StandardOpenOption.READ)) {
-                var headerBuffer = ByteBuffer.allocate(
-                        Integer.BYTES           // Magic
-                                + Long.BYTES    // Checksum
-                                + Integer.BYTES // Type ID
-                                + Integer.BYTES // Payload length
-                );
-                var recordNumberBuffer = ByteBuffer.allocate(Long.BYTES);
+        int recordsReplayed = 0;
+        try (var readChannel = FileChannel.open(file, StandardOpenOption.READ)) {
+            var headerBuffer = ByteBuffer.allocate(
+                    Integer.BYTES           // Magic
+                            + Long.BYTES    // Checksum
+                            + Integer.BYTES // Type ID
+                            + Integer.BYTES // Payload length
+            );
+            var recordNumberBuffer = ByteBuffer.allocate(Long.BYTES);
 
-                long checksum;
-                int payloadTypeId;
-                int payloadLength;
-                long recordNumber;
-                ByteBuffer payloadBuffer = null;
-                long filePosition;
+            long checksum;
+            int payloadTypeId;
+            int payloadLength;
+            long recordNumber;
+            ByteBuffer payloadBuffer = null;
+            long filePosition;
 
-                while (true) {
-                    filePosition = readChannel.position();
-                    // Read header
-                    if (readFully(readChannel, headerBuffer) < headerBuffer.capacity()) {
-                        break; // Clean EOF
-                    }
-                    headerBuffer.flip();
-                    if (MAGIC != headerBuffer.getInt()) {
-                        log.error("Magic number missing from record at file position {}", filePosition);
-                        throw new WalCorruptionException("Magic number missing");
-                    }
-                    checksum = headerBuffer.getLong();
-                    payloadTypeId = headerBuffer.getInt();
-                    payloadLength = headerBuffer.getInt();
-                    headerBuffer.clear();
-
-                    // Read payload
-                    if (payloadBuffer == null || payloadBuffer.capacity() < payloadLength) {
-                        payloadBuffer = ByteBuffer.allocate(payloadLength);
-                    }
-                    if (readFully(readChannel, payloadBuffer) < 0) {
-                        break;
-                    }
-                    payloadBuffer.flip();
-
-                    // Read record number
-                    if (readFully(readChannel, recordNumberBuffer) < 0) {
-                        break;
-                    }
-                    recordNumberBuffer.flip();
-                    recordNumber = recordNumberBuffer.getLong();
-                    recordNumberBuffer.clear();
-
-                    // Verify checksum
-                    var actualChecksum = calculateChecksum(payloadTypeId, payloadBuffer.array(), payloadLength, recordNumber);
-                    if (actualChecksum != checksum) {
-                        log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
-                                recordNumber, filePosition, checksum, actualChecksum);
-                        throw new WalCorruptionException("Checksum mismatch in record " + recordNumber);
-                    }
-
-                    // Pass record to consumer
-                    try {
-                        consumer.accept(new WalRecord(payloadTypeId, payloadBuffer.array(), payloadLength, recordNumber));
-                        recordsReplayed++;
-                    } catch (Exception ex) {
-                        log.debug("Error consuming record {}", recordNumber, ex);
-                        throw new WalConsumerException(ex);
-                    }
+            while (true) {
+                filePosition = readChannel.position();
+                // Read header
+                if (readFully(readChannel, headerBuffer) < headerBuffer.capacity()) {
+                    break; // Clean EOF
                 }
-            } catch (IOException ex) {
-                log.error("Error reading file", ex);
-                throw new WalIOException("Error reading file", ex);
-            } finally {
-                log.info("Records replayed: {}", recordsReplayed);
+                headerBuffer.flip();
+                if (MAGIC != headerBuffer.getInt()) {
+                    log.error("Magic number missing from record at file position {}", filePosition);
+                    throw new WalCorruptionException("Magic number missing");
+                }
+                checksum = headerBuffer.getLong();
+                payloadTypeId = headerBuffer.getInt();
+                payloadLength = headerBuffer.getInt();
+                headerBuffer.clear();
+
+                // Read payload
+                if (payloadBuffer == null || payloadBuffer.capacity() < payloadLength) {
+                    payloadBuffer = ByteBuffer.allocate(payloadLength);
+                }
+                if (readFully(readChannel, payloadBuffer) < 0) {
+                    break;
+                }
+                payloadBuffer.flip();
+
+                // Read record number
+                if (readFully(readChannel, recordNumberBuffer) < 0) {
+                    break;
+                }
+                recordNumberBuffer.flip();
+                recordNumber = recordNumberBuffer.getLong();
+                recordNumberBuffer.clear();
+
+                // Verify checksum
+                var actualChecksum = calculateChecksum(payloadTypeId, payloadBuffer.array(), 0, payloadLength, recordNumber);
+                if (actualChecksum != checksum) {
+                    log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
+                            recordNumber, filePosition, checksum, actualChecksum);
+                    throw new WalCorruptionException("Checksum mismatch");
+                }
+
+                // Pass record to consumer
+                try {
+                    consumer.accept(new WalRecord(payloadTypeId, payloadBuffer.array(), payloadLength, recordNumber));
+                    recordsReplayed++;
+                } catch (Exception ex) {
+                    log.debug("Error consuming record {}", recordNumber, ex);
+                    throw new WalConsumerException(ex);
+                }
             }
-        });
+        } catch (IOException ex) {
+            log.error("Error reading file", ex);
+            throw new WalIOException("Error reading file", ex);
+        } finally {
+            log.info("Replayed {} record(s) in {} ms", recordsReplayed, System.currentTimeMillis() - startTimeMillis);
+        }
     }
 
     private int readFully(FileChannel fileChannel, ByteBuffer buffer) throws IOException {
@@ -149,15 +184,12 @@ sealed abstract class WalFile implements AutoCloseable {
         return buffer.position();
     }
 
+    /// Provides read-only access to a WAL file.
     static final class ReadOnlyWalFile extends WalFile {
 
-        ReadOnlyWalFile(Path file) {
+        private ReadOnlyWalFile(Path file) {
             super(file);
-        }
-
-        @Override
-        protected void doWithReadLock(Runnable runnable) {
-            runnable.run(); // No need for a read lock
+            // TODO Check that the file exists and is readable
         }
 
         @Override
@@ -166,13 +198,21 @@ sealed abstract class WalFile implements AutoCloseable {
         }
     }
 
+    /// Creates a new `WalFile` for reading only.
+    ///
+    /// @param file the WAL file to read from
+    /// @throws WriteAheadLogException if the file does not exist or is not readable
+    public static ReadOnlyWalFile readOnly(Path file) {
+        return new ReadOnlyWalFile(file);
+    }
+
+    /// Provides both read and write access to a WAL file.
     static final class WritableWalFile extends WalFile {
 
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
         private final FileChannel fileChannel;
         private long nextRecordNumber;
 
-        public WritableWalFile(Path file, long defaultNextRecordNumber) {
+        private WritableWalFile(Path file, long defaultNextRecordNumber) {
             super(file);
             log.info("Opening file {} for writing", file);
             try {
@@ -214,51 +254,60 @@ sealed abstract class WalFile implements AutoCloseable {
             }
         }
 
-        public void write(int payloadTypeId, byte[] payload) {
+        /// Writes the given payload to the WAL in a new record.
+        ///
+        /// @param payloadTypeId the type of the payload
+        /// @param payload       the payload itself
+        /// @return the number of the written record
+        public long write(int payloadTypeId, byte[] payload) {
+            return write(payloadTypeId, payload, 0, payload.length);
+        }
+
+        /// Writes the given payload to the WAL in a new record.
+        ///
+        /// @param payloadTypeId the type of the payload
+        /// @param payload       an array containing the payload
+        /// @param payloadOffset the offset of the payload inside the array
+        /// @param payloadLength the length of the payload
+        /// @return the number of the written record
+        public long write(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength) {
             var size = Integer.BYTES  // Magic
                     + Long.BYTES      // Checksum
                     + Integer.BYTES   // Type ID
                     + Integer.BYTES   // Payload length
-                    + payload.length  // Payload
+                    + payloadLength   // Payload
                     + Long.BYTES;     // Record number
             var buffer = ByteBuffer.allocate(size);
-            lock.writeLock().lock();
+            var recordNumber = nextRecordNumber;
             try {
-                var checksum = calculateChecksum(payloadTypeId, payload, payload.length, nextRecordNumber);
+                var checksum = calculateChecksum(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
 
                 buffer.putInt(MAGIC);
                 buffer.putLong(checksum);
                 buffer.putInt(payloadTypeId);
                 buffer.putInt(payload.length);
-                buffer.put(payload);
-
-                buffer.putLong(nextRecordNumber);
+                buffer.put(payload, payloadOffset, payloadLength);
+                buffer.putLong(recordNumber);
                 buffer.flip();
+
                 while (buffer.hasRemaining()) {
                     //noinspection ResultOfMethodCallIgnored
                     fileChannel.write(buffer);
                 }
                 fileChannel.force(false);
                 nextRecordNumber++;
+                return recordNumber;
             } catch (IOException ex) {
                 log.error("Error writing payload to file", ex);
                 throw new WalIOException("Error writing payload to file", ex);
-            } finally {
-                lock.writeLock().unlock();
             }
         }
 
+        /// Returns the number that the next written record will get.
+        ///
+        /// @return the next record number
         public long getNextRecordNumber() {
-            lock.readLock().lock();
-            try {
-                return nextRecordNumber;
-            } finally {
-                lock.readLock().unlock();
-            }
-        }
-
-        public void verify() {
-
+            return nextRecordNumber;
         }
 
         @Override
@@ -270,18 +319,34 @@ sealed abstract class WalFile implements AutoCloseable {
                 throw new WalIOException("Error closing file", ex);
             }
         }
-
-        @Override
-        protected void doWithReadLock(Runnable runnable) {
-            lock.readLock().lock();
-            try {
-                runnable.run();
-            } finally {
-                lock.readLock().unlock();
-            }
-        }
     }
 
+    /// Creates a new `WalFile` for both writing and reading.
+    ///
+    /// If the given `file` does not exist, it is created. In this case, or if the file is empty, the record number of
+    /// the first record becomes the given `defaultNextRecordNumber`.
+    /// If the file exists, the next record number is read from the file itself.
+    ///
+    /// @param file                    the WAL file to write to and read from
+    /// @param defaultNextRecordNumber the record number to use for the first record if the file is empty
+    /// @throws WriteAheadLogException if the file cannot be opened for writing or created
+    public static WritableWalFile writable(Path file, long defaultNextRecordNumber) {
+        return new WritableWalFile(file, defaultNextRecordNumber);
+    }
+
+    /// Record for consumers replaying a WAL.
+    ///
+    /// **Note:** The `payload` array may be a reusable buffer, which means its contents may change for each record
+    /// being consumed. Because of this, the given `payloadLength` should be used, as the length of the array may be
+    /// larger than the actual payload.
+    ///
+    /// *The `payload` array must not be referenced outside the consumer!* Consumers should instead either process the
+    /// data directly, or copy the payload into another array for later processing.
+    ///
+    /// @param payloadTypeId the type of the payload
+    /// @param payload       an array containing the payload
+    /// @param payloadLength the length of the payload in bytes
+    /// @param recordNumber  the record number
     record WalRecord(int payloadTypeId, byte[] payload, int payloadLength, long recordNumber) {
 
     }

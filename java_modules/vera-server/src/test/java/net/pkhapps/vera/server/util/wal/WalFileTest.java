@@ -49,14 +49,14 @@ class WalFileTest {
 
     @Test
     void next_record_number_set_to_default_when_creating_new_file() {
-        try (var file = new WalFile.WritableWalFile(directory.resolve("empty"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("empty"), 1L)) {
             assertEquals(1L, file.getNextRecordNumber());
         }
     }
 
     @Test
     void writing_records_increment_number() {
-        try (var file = new WalFile.WritableWalFile(directory.resolve("increments"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("increments"), 1L)) {
             file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
             file.write(20, "world".getBytes(StandardCharsets.UTF_8));
             assertEquals(3L, file.getNextRecordNumber());
@@ -65,29 +65,46 @@ class WalFileTest {
 
     @Test
     void next_record_number_read_from_existing_file() {
-        try (var file = new WalFile.WritableWalFile(directory.resolve("next_record"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("next_record"), 1L)) {
             file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
             file.write(20, "world".getBytes(StandardCharsets.UTF_8));
         }
-        try (var file = new WalFile.WritableWalFile(directory.resolve("next_record"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("next_record"), 1L)) {
             assertEquals(3L, file.getNextRecordNumber());
         }
     }
 
     @Test
     void records_can_be_replayed_from_the_beginning() {
-        try (var file = new WalFile.WritableWalFile(directory.resolve("replay"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("replay"), 1L)) {
             file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
             file.write(20, "world".getBytes(StandardCharsets.UTF_8));
 
-            var records = new ArrayList<String>();
-            file.replayAll(record -> {
-                var payload = new String(record.payload(), 0, record.payloadLength(), StandardCharsets.UTF_8);
-                records.add("%d:%s:%d".formatted(record.payloadTypeId(), payload, record.recordNumber()));
-            });
-
+            var records = replay(file);
             assertEquals(List.of("10:hello:1", "20:world:2"), records);
         }
+    }
+
+    @Test
+    void records_can_be_replayed_from_readonly_file() {
+        try (var file = WalFile.writable(directory.resolve("replay_readonly"), 1L)) {
+            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
+            file.write(20, "world".getBytes(StandardCharsets.UTF_8));
+        }
+
+        try (var file = WalFile.readOnly(directory.resolve("replay_readonly"))) {
+            var records = replay(file);
+            assertEquals(List.of("10:hello:1", "20:world:2"), records);
+        }
+    }
+
+    private List<String> replay(WalFile file) {
+        var records = new ArrayList<String>();
+        file.replayAll(record -> {
+            var payload = new String(record.payload(), 0, record.payloadLength(), StandardCharsets.UTF_8);
+            records.add("%d:%s:%d".formatted(record.payloadTypeId(), payload, record.recordNumber()));
+        });
+        return records;
     }
 
     // TODO Test reading corrupt files
