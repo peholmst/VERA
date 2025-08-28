@@ -46,6 +46,8 @@ import java.util.zip.CRC32C;
 /// * `type`: an integer indicating the type of the payload. The caller decides what integers to use.
 /// * `length`: the length of the payload in bytes.
 ///
+/// There is no particular logic behind the ordering of the fields in the header, except the magic number at the start.
+///
 /// ### Thread Safety
 ///
 /// **This class does not perform any thread-locking at all.** Callers are expected to make sure the proper locks are in
