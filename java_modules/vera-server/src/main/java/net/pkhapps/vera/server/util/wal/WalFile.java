@@ -147,8 +147,11 @@ sealed abstract class WalFile implements AutoCloseable {
                             + Integer.BYTES // Type ID
                             + Integer.BYTES // Payload length
             );
-            if (readFully(channel, headerBuf) < headerBuf.capacity()) {
-                log.warn("Incomplete header at file position {}", position);
+            var readHeaderBytes = readFully(channel, headerBuf);
+            if (readHeaderBytes < headerBuf.capacity()) {
+                if (readHeaderBytes > 0) {
+                    log.warn("Incomplete header at file position {}", position);
+                } // Otherwise, we're just at the end of the file.
                 return null;
             }
             headerBuf.flip();
@@ -165,15 +168,15 @@ sealed abstract class WalFile implements AutoCloseable {
             // Read payload
             byte[] payload = scratch.ensureCapacity(payloadLength);
             var payloadBuf = ByteBuffer.wrap(payload, 0, payloadLength);
-            if (readFully(channel, payloadBuf) < 0) {
+            if (readFully(channel, payloadBuf) < payloadBuf.capacity()) {
                 log.error("Incomplete payload at file position {}", position);
                 return null;
             }
 
             // Read record number
             var recordNumberBuf = ByteBuffer.allocate(Long.BYTES);
-            if (readFully(channel, recordNumberBuf) < 0) {
-                log.error("Incomplete record number at file position {}", position);
+            if (readFully(channel, recordNumberBuf) < recordNumberBuf.capacity()) {
+                log.warn("Incomplete record number at file position {}", position);
                 return null;
             }
             recordNumberBuf.flip();
@@ -197,7 +200,7 @@ sealed abstract class WalFile implements AutoCloseable {
     private static int readFully(FileChannel fileChannel, ByteBuffer buffer) throws IOException {
         while (buffer.hasRemaining()) {
             if (fileChannel.read(buffer) < 0) {
-                return -1;
+                break;
             }
         }
         return buffer.position();
@@ -290,6 +293,11 @@ sealed abstract class WalFile implements AutoCloseable {
         /// @param payloadLength the length of the payload
         /// @return the number of the written record
         public long write(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength) {
+            tryWriteRecord(fileChannel, payloadTypeId, payload, payloadOffset, payloadLength, nextRecordNumber);
+            return nextRecordNumber++;
+        }
+
+        static ByteBuffer writeRecord(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
             var size = Integer.BYTES  // Magic
                     + Long.BYTES      // Checksum
                     + Integer.BYTES   // Type ID
@@ -297,25 +305,26 @@ sealed abstract class WalFile implements AutoCloseable {
                     + payloadLength   // Payload
                     + Long.BYTES;     // Record number
             var buffer = ByteBuffer.allocate(size);
-            var recordNumber = nextRecordNumber;
+            var checksum = calculateChecksum(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
+
+            buffer.putInt(MAGIC);
+            buffer.putLong(checksum);
+            buffer.putInt(payloadTypeId);
+            buffer.putInt(payload.length);
+            buffer.put(payload, payloadOffset, payloadLength);
+            buffer.putLong(recordNumber);
+            buffer.flip();
+            return buffer;
+        }
+
+        private static void tryWriteRecord(FileChannel channel, int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
+            var buffer = writeRecord(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
             try {
-                var checksum = calculateChecksum(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
-
-                buffer.putInt(MAGIC);
-                buffer.putLong(checksum);
-                buffer.putInt(payloadTypeId);
-                buffer.putInt(payload.length);
-                buffer.put(payload, payloadOffset, payloadLength);
-                buffer.putLong(recordNumber);
-                buffer.flip();
-
                 while (buffer.hasRemaining()) {
                     //noinspection ResultOfMethodCallIgnored
-                    fileChannel.write(buffer);
+                    channel.write(buffer);
                 }
-                fileChannel.force(false);
-                nextRecordNumber++;
-                return recordNumber;
+                channel.force(false);
             } catch (IOException ex) {
                 log.error("Error writing payload to file", ex);
                 throw new WalIOException("Error writing payload to file", ex);

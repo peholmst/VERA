@@ -22,9 +22,12 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -106,6 +109,69 @@ class WalFileTest {
         });
         return records;
     }
+
+    @Test
+    void replaying_skips_incomplete_header_in_last_record() throws IOException {
+        var path = directory.resolve("replay_incomplete_header");
+        try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+            writeCompleteRecord(channel, 10, "hello", 1L);
+            writeCompleteRecord(channel, 20, "world", 2L);
+            writeIncompleteRecord(channel, 30, "incomplete header", 3L, 16);
+        }
+
+        try (var file = WalFile.readOnly(path)) {
+            var records = replay(file);
+            assertEquals(List.of("10:hello:1", "20:world:2"), records);
+        }
+    }
+
+    @Test
+    void replaying_skips_incomplete_payload_in_last_record() throws IOException {
+        var path = directory.resolve("replay_incomplete_payload");
+        try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+            writeCompleteRecord(channel, 10, "hello", 1L);
+            writeCompleteRecord(channel, 20, "world", 2L);
+            writeIncompleteRecord(channel, 40, "incomplete payload", 3L, 22);
+        }
+
+        try (var file = WalFile.readOnly(path)) {
+            var records = replay(file);
+            assertEquals(List.of("10:hello:1", "20:world:2"), records);
+        }
+    }
+
+    @Test
+    void replaying_skips_incomplete_record_number_in_last_record() throws IOException {
+        var path = directory.resolve("replay_incomplete_record_number");
+        try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+            writeCompleteRecord(channel, 10, "hello", 1L);
+            writeCompleteRecord(channel, 20, "world", 2L);
+            writeIncompleteRecord(channel, 40, "incomplete record number", 3L, 45);
+        }
+
+        try (var file = WalFile.readOnly(path)) {
+            var records = replay(file);
+            assertEquals(List.of("10:hello:1", "20:world:2"), records);
+        }
+    }
+
+    private void writeCompleteRecord(FileChannel channel, int payloadTypeId, String payload, long recordNumber) throws IOException {
+        var payloadBuf = payload.getBytes(StandardCharsets.UTF_8);
+        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadTypeId, payloadBuf, 0, payloadBuf.length, recordNumber);
+        while (recordBuf.hasRemaining()) {
+            channel.write(recordBuf);
+        }
+    }
+
+    private void writeIncompleteRecord(FileChannel channel, int payloadTypeId, String payload, long recordNumber, int truncateAt) throws IOException {
+        var payloadBuf = payload.getBytes(StandardCharsets.UTF_8);
+        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadTypeId, payloadBuf, 0, payloadBuf.length, recordNumber);
+        var truncatedBuf = ByteBuffer.wrap(recordBuf.array(), 0, truncateAt);
+        while (truncatedBuf.hasRemaining()) {
+            channel.write(truncatedBuf);
+        }
+    }
+
 
     // TODO Test reading corrupt files
 }
