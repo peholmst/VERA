@@ -34,16 +34,14 @@ import java.util.zip.CRC32C;
 ///
 /// A WAL file record has the following format (name, size in bytes):
 ///
-/// `[header:20][payload:n][record number:8]`
-///
-/// The record number is at the end to make it easier to find the latest record number when opening an existing file
-/// for writing.
+/// `[header:28][payload:n]`
 ///
 /// A WAL file record header has the following format (name, size in bytes):
 ///
-/// `[magic:4][checksum:8][type:4][length:4]`
+/// `[magic:4][record number:8][checksum:8][type:4][length:4]`
 ///
 /// * `magic`: always {@value #MAGIC}; acts as a marker for new records.
+/// * `record number`: a long containing the record number. Record numbers increment by one, but the caller decides what the first record number is when creating a new file.
 /// * `checksum`: a CRC32C checksum of `type`, `length`, `payload`, and `record number`.
 /// * `type`: an integer indicating the type of the payload. The caller decides what integers to use.
 /// * `length`: the length of the payload in bytes.
@@ -68,10 +66,12 @@ sealed abstract class WalFile implements AutoCloseable {
 
     /// A magic constant used to mark the beginning of a new record in the WAL.
     static final int MAGIC = 0x57414C30;
-    private static int HEADER_SIZE = Integer.BYTES // Magic
-            + Long.BYTES                           // Checksum
-            + Integer.BYTES                        // Type ID
-            + Integer.BYTES;                       // Payload length
+    /// The size of the header in bytes
+    static final int HEADER_SIZE = Integer.BYTES // Magic
+            + Long.BYTES                         // Record number
+            + Long.BYTES                         // Checksum
+            + Integer.BYTES                      // Type ID
+            + Integer.BYTES;                     // Payload length
 
     protected final Path file;
 
@@ -146,9 +146,10 @@ sealed abstract class WalFile implements AutoCloseable {
             channel.position(position);
 
             // Read header
-            var headerBuf = ByteBuffer.allocate(HEADER_SIZE);
+            byte[] header = scratch.ensureCapacity(HEADER_SIZE);
+            var headerBuf = ByteBuffer.wrap(header, 0, HEADER_SIZE);
             var readHeaderBytes = readFully(channel, headerBuf);
-            if (readHeaderBytes < headerBuf.capacity()) {
+            if (readHeaderBytes < headerBuf.limit()) {
                 if (readHeaderBytes > 0) {
                     log.warn("Incomplete header at file position {}", position);
                 } // Otherwise, we're just at the end of the file.
@@ -161,6 +162,7 @@ sealed abstract class WalFile implements AutoCloseable {
                 throw new WalCorruptionException("Incorrect magic number");
             }
 
+            var recordNumber = headerBuf.getLong();
             var checksum = headerBuf.getLong();
             var payloadTypeId = headerBuf.getInt();
             var payloadLength = headerBuf.getInt();
@@ -168,19 +170,10 @@ sealed abstract class WalFile implements AutoCloseable {
             // Read payload
             byte[] payload = scratch.ensureCapacity(payloadLength);
             var payloadBuf = ByteBuffer.wrap(payload, 0, payloadLength);
-            if (readFully(channel, payloadBuf) < payloadBuf.capacity()) {
+            if (readFully(channel, payloadBuf) < payloadBuf.limit()) {
                 log.error("Incomplete payload at file position {}", position);
                 return null;
             }
-
-            // Read record number
-            var recordNumberBuf = ByteBuffer.allocate(Long.BYTES);
-            if (readFully(channel, recordNumberBuf) < recordNumberBuf.capacity()) {
-                log.warn("Incomplete record number at file position {}", position);
-                return null;
-            }
-            recordNumberBuf.flip();
-            var recordNumber = recordNumberBuf.getLong();
 
             // Verify checksum
             var actualChecksum = calculateChecksum(payloadTypeId, payload, 0, payloadLength, recordNumber);
@@ -323,17 +316,16 @@ sealed abstract class WalFile implements AutoCloseable {
         /// Visible for testing, would otherwise be private.
         static ByteBuffer writeRecord(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
             var size = HEADER_SIZE   // Header
-                    + payloadLength  // Payload
-                    + Long.BYTES;    // Record number
+                    + payloadLength;  // Payload
             var buffer = ByteBuffer.allocate(size);
             var checksum = calculateChecksum(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
 
             buffer.putInt(MAGIC);
+            buffer.putLong(recordNumber);
             buffer.putLong(checksum);
             buffer.putInt(payloadTypeId);
             buffer.putInt(payload.length);
             buffer.put(payload, payloadOffset, payloadLength);
-            buffer.putLong(recordNumber);
             buffer.flip();
             return buffer;
         }
@@ -400,8 +392,7 @@ sealed abstract class WalFile implements AutoCloseable {
 
         long sizeOnDisk() {
             return HEADER_SIZE        // Header
-                    + payloadLength   // Payload
-                    + Long.BYTES;     // Record number
+                    + payloadLength;   // Payload
         }
     }
 
