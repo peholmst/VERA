@@ -75,7 +75,7 @@ sealed abstract class WalFile implements AutoCloseable {
     }
 
     private static long calculateChecksum(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength,
-                                            long recordNumber) {
+                                          long recordNumber) {
         var crc = new CRC32C();
         crc.update(payloadTypeId);
         crc.update(payloadLength);
@@ -102,68 +102,20 @@ sealed abstract class WalFile implements AutoCloseable {
         log.info("Replaying all records");
         int recordsReplayed = 0;
         try (var readChannel = FileChannel.open(file, StandardOpenOption.READ)) {
-            var headerBuffer = ByteBuffer.allocate(
-                    Integer.BYTES           // Magic
-                            + Long.BYTES    // Checksum
-                            + Integer.BYTES // Type ID
-                            + Integer.BYTES // Payload length
-            );
-            var recordNumberBuffer = ByteBuffer.allocate(Long.BYTES);
-
-            long checksum;
-            int payloadTypeId;
-            int payloadLength;
-            long recordNumber;
-            ByteBuffer payloadBuffer = null;
-            long filePosition;
-
+            var scratch = new ScratchBuffer();
             while (true) {
-                filePosition = readChannel.position();
-                // Read header
-                if (readFully(readChannel, headerBuffer) < headerBuffer.capacity()) {
-                    break; // Clean EOF
-                }
-                headerBuffer.flip();
-                if (MAGIC != headerBuffer.getInt()) {
-                    log.error("Magic number missing from record at file position {}", filePosition);
-                    throw new WalCorruptionException("Magic number missing");
-                }
-                checksum = headerBuffer.getLong();
-                payloadTypeId = headerBuffer.getInt();
-                payloadLength = headerBuffer.getInt();
-                headerBuffer.clear();
-
-                // Read payload
-                if (payloadBuffer == null || payloadBuffer.capacity() < payloadLength) {
-                    payloadBuffer = ByteBuffer.allocate(payloadLength);
-                }
-                if (readFully(readChannel, payloadBuffer) < 0) {
-                    break;
-                }
-                payloadBuffer.flip();
-
-                // Read record number
-                if (readFully(readChannel, recordNumberBuffer) < 0) {
-                    break;
-                }
-                recordNumberBuffer.flip();
-                recordNumber = recordNumberBuffer.getLong();
-                recordNumberBuffer.clear();
-
-                // Verify checksum
-                var actualChecksum = calculateChecksum(payloadTypeId, payloadBuffer.array(), 0, payloadLength, recordNumber);
-                if (actualChecksum != checksum) {
-                    log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
-                            recordNumber, filePosition, checksum, actualChecksum);
-                    throw new WalCorruptionException("Checksum mismatch");
+                // Read record
+                var record = tryReadRecord(readChannel, scratch);
+                if (record == null) {
+                    break; // clean EOF
                 }
 
                 // Pass record to consumer
                 try {
-                    consumer.accept(new WalRecord(payloadTypeId, payloadBuffer.array(), payloadLength, recordNumber));
+                    consumer.accept(record);
                     recordsReplayed++;
                 } catch (Exception ex) {
-                    log.debug("Error consuming record {}", recordNumber, ex);
+                    log.debug("Error consuming record {}", record.recordNumber, ex);
                     throw new WalConsumerException(ex);
                 }
             }
@@ -175,7 +127,74 @@ sealed abstract class WalFile implements AutoCloseable {
         }
     }
 
-    private int readFully(FileChannel fileChannel, ByteBuffer buffer) throws IOException {
+    private static WalRecord tryReadRecord(FileChannel channel, ScratchBuffer scratchBuffer) {
+        try {
+            return tryReadRecord(channel, channel.position(), scratchBuffer);
+        } catch (IOException ex) {
+            log.error("Error reading file", ex);
+            throw new WalIOException("Error reading file", ex);
+        }
+    }
+
+    private static WalRecord tryReadRecord(FileChannel channel, long position, ScratchBuffer scratch) {
+        try {
+            channel.position(position);
+
+            // Read header
+            var headerBuf = ByteBuffer.allocate(
+                    Integer.BYTES           // Magic
+                            + Long.BYTES    // Checksum
+                            + Integer.BYTES // Type ID
+                            + Integer.BYTES // Payload length
+            );
+            if (readFully(channel, headerBuf) < headerBuf.capacity()) {
+                log.warn("Incomplete header at file position {}", position);
+                return null;
+            }
+            headerBuf.flip();
+
+            if (MAGIC != headerBuf.getInt()) {
+                log.error("Incorrect magic number at file position {}", position);
+                throw new WalCorruptionException("Incorrect magic number");
+            }
+
+            var checksum = headerBuf.getLong();
+            var payloadTypeId = headerBuf.getInt();
+            var payloadLength = headerBuf.getInt();
+
+            // Read payload
+            byte[] payload = scratch.ensureCapacity(payloadLength);
+            var payloadBuf = ByteBuffer.wrap(payload, 0, payloadLength);
+            if (readFully(channel, payloadBuf) < 0) {
+                log.error("Incomplete payload at file position {}", position);
+                return null;
+            }
+
+            // Read record number
+            var recordNumberBuf = ByteBuffer.allocate(Long.BYTES);
+            if (readFully(channel, recordNumberBuf) < 0) {
+                log.error("Incomplete record number at file position {}", position);
+                return null;
+            }
+            recordNumberBuf.flip();
+            var recordNumber = recordNumberBuf.getLong();
+
+            // Verify checksum
+            var actualChecksum = calculateChecksum(payloadTypeId, payload, 0, payloadLength, recordNumber);
+            if (actualChecksum != checksum) {
+                log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
+                        recordNumber, position, checksum, actualChecksum);
+                throw new WalCorruptionException("Checksum mismatch");
+            }
+
+            return new WalRecord(payloadTypeId, payload, payloadLength, recordNumber);
+        } catch (IOException ex) {
+            log.error("Error reading file", ex);
+            throw new WalIOException("Error reading file", ex);
+        }
+    }
+
+    private static int readFully(FileChannel fileChannel, ByteBuffer buffer) throws IOException {
         while (buffer.hasRemaining()) {
             if (fileChannel.read(buffer) < 0) {
                 return -1;
@@ -349,5 +368,16 @@ sealed abstract class WalFile implements AutoCloseable {
     /// @param recordNumber  the record number
     record WalRecord(int payloadTypeId, byte[] payload, int payloadLength, long recordNumber) {
 
+    }
+
+    private static class ScratchBuffer {
+        private byte[] buffer = null;
+
+        byte[] ensureCapacity(int length) {
+            if (buffer == null || buffer.length < length) {
+                buffer = new byte[length];
+            }
+            return buffer;
+        }
     }
 }

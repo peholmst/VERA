@@ -57,8 +57,8 @@ class WalFileTest {
     @Test
     void writing_records_increment_number() {
         try (var file = WalFile.writable(directory.resolve("increments"), 1L)) {
-            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
-            file.write(20, "world".getBytes(StandardCharsets.UTF_8));
+            assertEquals(1L, file.write(10, "hello".getBytes(StandardCharsets.UTF_8)));
+            assertEquals(2L, file.write(20, "world".getBytes(StandardCharsets.UTF_8)));
             assertEquals(3L, file.getNextRecordNumber());
         }
     }
