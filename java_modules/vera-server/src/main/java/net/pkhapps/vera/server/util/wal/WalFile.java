@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.function.Consumer;
@@ -67,6 +68,10 @@ sealed abstract class WalFile implements AutoCloseable {
 
     /// A magic constant used to mark the beginning of a new record in the WAL.
     static final int MAGIC = 0x57414C30;
+    private static int HEADER_SIZE = Integer.BYTES // Magic
+            + Long.BYTES                           // Checksum
+            + Integer.BYTES                        // Type ID
+            + Integer.BYTES;                       // Payload length
 
     protected final Path file;
 
@@ -141,12 +146,7 @@ sealed abstract class WalFile implements AutoCloseable {
             channel.position(position);
 
             // Read header
-            var headerBuf = ByteBuffer.allocate(
-                    Integer.BYTES           // Magic
-                            + Long.BYTES    // Checksum
-                            + Integer.BYTES // Type ID
-                            + Integer.BYTES // Payload length
-            );
+            var headerBuf = ByteBuffer.allocate(HEADER_SIZE);
             var readHeaderBytes = readFully(channel, headerBuf);
             if (readHeaderBytes < headerBuf.capacity()) {
                 if (readHeaderBytes > 0) {
@@ -237,12 +237,6 @@ sealed abstract class WalFile implements AutoCloseable {
         private WritableWalFile(Path file, long defaultNextRecordNumber) {
             super(file);
             log.info("Opening file {} for writing", file);
-            try {
-                fileChannel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            } catch (IOException ex) {
-                log.error("Error opening file {}", file, ex);
-                throw new WalIOException("Error opening file", ex);
-            }
 
             try {
                 var lastRecordNumber = readLastRecordNumber(file);
@@ -254,26 +248,55 @@ sealed abstract class WalFile implements AutoCloseable {
                 log.debug("Next record number: {}", nextRecordNumber);
             } catch (Exception ex) {
                 log.error("Error reading last record number", ex);
-                close();
                 throw new WalIOException("Error reading last record number", ex);
+            }
+
+            try {
+                fileChannel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (IOException ex) {
+                log.error("Error opening file {}", file, ex);
+                throw new WalIOException("Error opening file", ex);
             }
         }
 
-        private long readLastRecordNumber(Path file) throws IOException {
-            // TODO Add support for corrupt last record!
-            try (var readChannel = FileChannel.open(file, StandardOpenOption.READ)) {
-                var size = readChannel.size();
-                if (size == 0) {
-                    log.debug("File {} is empty", file);
-                    return -1;
-                } else {
-                    log.debug("File {} is {} bytes, reading last record number", file, size);
-                    var buffer = ByteBuffer.allocate(Long.BYTES);
-                    readChannel.read(buffer, size - Long.BYTES);
-                    buffer.flip();
-                    return buffer.getLong();
+        private static long readLastRecordNumber(Path file) throws IOException {
+            try (var channel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+                var size = channel.size();
+                var pos = size - Integer.BYTES;
+                var magicBuf = ByteBuffer.allocate(Integer.BYTES);
+                var scratch = new ScratchBuffer();
+
+                while (pos >= 0) {
+                    channel.position(pos);
+                    channel.read(magicBuf);
+                    magicBuf.flip();
+                    if (magicBuf.getInt() == MAGIC) {
+                        try {
+                            var rec = WalFile.tryReadRecord(channel, pos, scratch);
+                            if (rec != null) {
+                                // Valid record found
+                                var validSize = pos + rec.sizeOnDisk();
+                                if (validSize < size) {
+                                    log.warn("Truncating file {} to {} bytes because of corruption in last record", file, validSize);
+                                    channel.truncate(pos + rec.sizeOnDisk());
+                                    channel.force(false);
+                                }
+                                return rec.recordNumber();
+                            }
+                        } catch (WalCorruptionException _) {
+                            // Not a valid record, keep scanning back
+                        }
+                    }
+                    magicBuf.clear();
+                    pos--;
                 }
+                log.warn("Found no valid records in file {}, truncating to 0", file);
+                channel.truncate(0);
+                channel.force(false);
+            } catch (NoSuchFileException ex) {
+                log.debug("File {} is empty", file);
             }
+            return -1;
         }
 
         /// Writes the given payload to the WAL in a new record.
@@ -297,13 +320,11 @@ sealed abstract class WalFile implements AutoCloseable {
             return nextRecordNumber++;
         }
 
+        /// Visible for testing, would otherwise be private.
         static ByteBuffer writeRecord(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
-            var size = Integer.BYTES  // Magic
-                    + Long.BYTES      // Checksum
-                    + Integer.BYTES   // Type ID
-                    + Integer.BYTES   // Payload length
-                    + payloadLength   // Payload
-                    + Long.BYTES;     // Record number
+            var size = HEADER_SIZE   // Header
+                    + payloadLength  // Payload
+                    + Long.BYTES;    // Record number
             var buffer = ByteBuffer.allocate(size);
             var checksum = calculateChecksum(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
 
@@ -377,6 +398,11 @@ sealed abstract class WalFile implements AutoCloseable {
     /// @param recordNumber  the record number
     record WalRecord(int payloadTypeId, byte[] payload, int payloadLength, long recordNumber) {
 
+        long sizeOnDisk() {
+            return HEADER_SIZE        // Header
+                    + payloadLength   // Payload
+                    + Long.BYTES;     // Record number
+        }
     }
 
     private static class ScratchBuffer {
