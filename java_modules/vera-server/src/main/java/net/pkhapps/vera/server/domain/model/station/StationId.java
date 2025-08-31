@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.server.domain.primitive;
+package net.pkhapps.vera.server.domain.model.station;
 
 import net.pkhapps.vera.server.domain.base.NanoIdentifier;
 
