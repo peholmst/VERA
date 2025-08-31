@@ -16,6 +16,8 @@
 
 package net.pkhapps.vera.server.domain.base;
 
-/// Marker interface for identifiers that are used to identify aggregates and other domain objects.
-public interface Identifier extends ValueObject {
+/// Marker interface for value objects.
+///
+/// In this application, value objects are **always immutable**.
+public interface ValueObject {
 }
