@@ -24,10 +24,6 @@ import java.util.stream.StreamSupport;
 
 /// WAL event that acts as an envelope of events written by aggregates.
 ///
-/// Aggregates don't write events to the WAL directly. Instead, they write them to the repository, who wraps them
-/// and writes them to the WAL. Likewise, when the WAL is replayed, the repository instantiates the aggregates and
-/// forwards the appropriate events to them.
-///
 /// @see RepositoryWalEvent
 /// @see RepositoryWalSnapshot
 final class AggregateWalEvent implements WalEvent {
