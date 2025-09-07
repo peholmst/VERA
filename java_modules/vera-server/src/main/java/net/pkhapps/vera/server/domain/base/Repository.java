@@ -107,7 +107,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     ///
     /// @param aggregate the aggregate to add to the repository
     /// @throws DuplicateIdentifierException  if an aggregate with the same ID already exists in the repository
-    /// @throws RepositoryAtCapacityException if the repository is at repository and cannot accept more aggregates
+    /// @throws RepositoryAtCapacityException if the repository is at capacity and cannot accept more aggregates
     /// @see #remove(Identifier)
     protected synchronized final void insert(T aggregate) {
         if (aggregates.containsKey(aggregate.id())) {
