@@ -18,10 +18,8 @@ package net.pkhapps.vera.server.domain.model.i18n;
 
 import net.pkhapps.vera.server.domain.base.ValueObject;
 
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 // TODO document me
 public final class MultiLingualString implements ValueObject {
@@ -47,12 +45,28 @@ public final class MultiLingualString implements ValueObject {
         return new MultiLingualString(Map.copyOf(values));
     }
 
+    public static MultiLingualString of(Collection<LocalizedString> values) {
+        if (values.isEmpty()) {
+            throw new IllegalArgumentException("Collection must contain at least one entry");
+        }
+        return new MultiLingualString(values.stream().collect(Collectors.toMap(LocalizedString::locale, LocalizedString::value)));
+    }
+
     public boolean contains(Locale locale) {
         return values.containsKey(locale);
     }
 
     public Optional<String> get(Locale locale) {
         return Optional.ofNullable(values.get(locale));
+    }
+
+    public int size() {
+        return values.size();
+    }
+
+    public Collection<LocalizedString> entries() {
+        // TODO This should be cached!
+        return values.entrySet().stream().map(entry -> new LocalizedString(entry.getKey(), entry.getValue())).toList();
     }
 
     @Override
@@ -70,5 +84,8 @@ public final class MultiLingualString implements ValueObject {
     @Override
     public int hashCode() {
         return Objects.hashCode(values);
+    }
+
+    public record LocalizedString(Locale locale, String value) {
     }
 }
