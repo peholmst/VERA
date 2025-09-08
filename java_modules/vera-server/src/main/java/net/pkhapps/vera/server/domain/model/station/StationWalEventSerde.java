@@ -82,4 +82,9 @@ class StationWalEventSerde implements Serde<Station.StationWalEvent> {
             default -> throw new UnsupportedTypeIdException(typeId);
         }
     }
+
+    @Override
+    public boolean supports(int typeId) {
+        return typeId == TYPE_ID_SET_NAME || typeId == TYPE_ID_SET_LOCATION || typeId == TYPE_ID_SET_NOTE;
+    }
 }

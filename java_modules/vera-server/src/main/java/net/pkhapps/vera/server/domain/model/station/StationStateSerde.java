@@ -58,4 +58,9 @@ class StationStateSerde implements Serde<Station.StationState> {
                 reader.getNullableString()
         );
     }
+
+    @Override
+    public boolean supports(int typeId) {
+        return typeId == TYPE_ID;
+    }
 }

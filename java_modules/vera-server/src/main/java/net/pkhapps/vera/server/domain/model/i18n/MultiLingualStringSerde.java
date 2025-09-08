@@ -67,4 +67,9 @@ public class MultiLingualStringSerde implements Serde<MultiLingualString> {
         }
         return MultiLingualString.of(entries);
     }
+
+    @Override
+    public boolean supports(int typeId) {
+        return typeId == TYPE_ID;
+    }
 }

@@ -53,4 +53,9 @@ public class Wgs84PointSerde implements Serde<Wgs84Point> {
                 reader.getDouble()
         );
     }
+
+    @Override
+    public boolean supports(int typeId) {
+        return typeId == TYPE_ID;
+    }
 }

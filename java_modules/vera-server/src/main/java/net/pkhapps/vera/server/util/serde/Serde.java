@@ -23,4 +23,6 @@ public interface Serde<T> {
     int computeSize(SerdeContext context, T object);
 
     T deserialize(SerdeContext context, int typeId, byte[] payload);
+
+    boolean supports(int typeId);
 }
