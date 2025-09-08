@@ -21,6 +21,8 @@ import net.pkhapps.vera.server.util.serde.Serde;
 import net.pkhapps.vera.server.util.serde.SerdeContext;
 import net.pkhapps.vera.server.util.serde.UnsupportedTypeIdException;
 
+import java.util.Set;
+
 /// [Serde] for [Wgs84Point].
 public class Wgs84PointSerde implements Serde<Wgs84Point> {
 
@@ -55,7 +57,7 @@ public class Wgs84PointSerde implements Serde<Wgs84Point> {
     }
 
     @Override
-    public boolean supports(int typeId) {
-        return typeId == TYPE_ID;
+    public Set<Integer> supportedTypeIds() {
+        return Set.of(TYPE_ID);
     }
 }

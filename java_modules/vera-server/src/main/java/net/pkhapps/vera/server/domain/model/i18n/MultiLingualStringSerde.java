@@ -23,6 +23,7 @@ import net.pkhapps.vera.server.util.serde.UnsupportedTypeIdException;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Set;
 
 /// [Serde] for [MultiLingualString].
 public class MultiLingualStringSerde implements Serde<MultiLingualString> {
@@ -69,7 +70,7 @@ public class MultiLingualStringSerde implements Serde<MultiLingualString> {
     }
 
     @Override
-    public boolean supports(int typeId) {
-        return typeId == TYPE_ID;
+    public Set<Integer> supportedTypeIds() {
+        return Set.of(TYPE_ID);
     }
 }

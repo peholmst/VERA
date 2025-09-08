@@ -23,6 +23,8 @@ import net.pkhapps.vera.server.util.serde.Serde;
 import net.pkhapps.vera.server.util.serde.SerdeContext;
 import net.pkhapps.vera.server.util.serde.UnsupportedTypeIdException;
 
+import java.util.Set;
+
 /// [Serde] for [net.pkhapps.vera.server.domain.model.station.Station.StationState].
 class StationStateSerde implements Serde<Station.StationState> {
 
@@ -60,7 +62,7 @@ class StationStateSerde implements Serde<Station.StationState> {
     }
 
     @Override
-    public boolean supports(int typeId) {
-        return typeId == TYPE_ID;
+    public Set<Integer> supportedTypeIds() {
+        return Set.of(TYPE_ID);
     }
 }

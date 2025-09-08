@@ -16,6 +16,8 @@
 
 package net.pkhapps.vera.server.util.serde;
 
+import java.util.Set;
+
 public interface Serde<T> {
 
     void serialize(SerdeContext context, T object, Output output);
@@ -24,5 +26,5 @@ public interface Serde<T> {
 
     T deserialize(SerdeContext context, int typeId, byte[] payload);
 
-    boolean supports(int typeId);
+    Set<Integer> supportedTypeIds();
 }
