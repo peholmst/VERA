@@ -24,18 +24,34 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /// WAL snapshot for repositories.
-final class RepositoryWalSnapshot implements WalSnapshot {
+final class RepositoryWalSnapshot<T extends Aggregate<ID, S, ?>, ID extends Identifier, S extends Record> implements WalSnapshot {
 
-    private final Class<? extends Aggregate<?, ?, ?>> aggregateType;
-    private final Map<Identifier, Record> aggregateStates;
+    private final Class<T> aggregateType;
+    private final Map<ID, S> aggregateStates;
 
-    public <T extends Aggregate<?, ?, ?>> RepositoryWalSnapshot(Class<T> aggregateType, Iterable<T> aggregates) {
+    /// Constructor used by the Serde and by factory methods. Clients should not call this method directly.
+    ///
+    /// **Note:** This constructor does *not* copy the `aggregateStates` map for performance reasons. Callers must make
+    /// sure the map is effectively immutable.
+    ///
+    /// @param aggregateType   the type of the aggregate whose states are stored in this snapshot
+    /// @param aggregateStates a map of aggregate ID and states to store in the snapshot
+    RepositoryWalSnapshot(Class<T> aggregateType, Map<ID, S> aggregateStates) {
         this.aggregateType = aggregateType;
-        this.aggregateStates = StreamSupport.stream(aggregates.spliterator(), false)
-                .collect(Collectors.toMap(
+        this.aggregateStates = aggregateStates;
+    }
+
+    /// Creates a new `RepositoryWalSnapshot`.
+    ///
+    /// @param aggregateType the type of aggregates to store in this snapshot
+    /// @param aggregates    the aggregates to store in this snapshot
+    public static <T extends Aggregate<ID, S, ?>, ID extends Identifier, S extends Record> RepositoryWalSnapshot<T, ID, S> of(Class<T> aggregateType, Iterable<T> aggregates) {
+        return new RepositoryWalSnapshot<>(
+                aggregateType,
+                StreamSupport.stream(aggregates.spliterator(), false).collect(Collectors.toMap(
                         aggregate -> aggregate.id(),
                         aggregate -> aggregate.toState())
-                );
+                ));
     }
 
     @Override
@@ -43,12 +59,26 @@ final class RepositoryWalSnapshot implements WalSnapshot {
         return "%s[aggregateType=%s, stateCount=%d]".formatted(getClass().getSimpleName(), aggregateType().getSimpleName(), aggregateStates.size());
     }
 
-    @SuppressWarnings("unchecked")
-    public <ID extends Identifier, S extends Record> void forEach(BiConsumer<ID, S> consumer) {
-        aggregateStates.forEach((id, state) -> consumer.accept((ID) id, (S) state));
+    /// Performs the given `action` for each aggregate in this snapshot.
+    ///
+    /// The snapshot does not contain [Aggregate] objects, but pairs of the aggregate ID and state.
+    ///
+    /// @param action the action to perform for each aggregate in this snapshot
+    public void forEach(BiConsumer<ID, S> action) {
+        aggregateStates.forEach(action);
     }
 
-    public Class<? extends Aggregate<?, ?, ?>> aggregateType() {
+    /// Returns the number of aggregates in this snapshot.
+    ///
+    /// @return the number of aggregates
+    public int size() {
+        return aggregateStates.size();
+    }
+
+    /// Returns the type of the aggregates in this snapshot
+    ///
+    /// @return the aggregate type
+    public Class<T> aggregateType() {
         return aggregateType;
     }
 }

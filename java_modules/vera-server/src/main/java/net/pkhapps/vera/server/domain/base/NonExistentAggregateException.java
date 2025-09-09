@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.domain.base;
 
+/// Exception thrown by a [Repository] when an attempt is made to perform an operation on an aggregate that does not exist.
 public class NonExistentAggregateException extends RepositoryException {
 
     public <T extends Aggregate<ID, ?, ?>, ID extends Identifier> NonExistentAggregateException(Class<T> aggregateType, ID id) {

@@ -26,7 +26,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -118,7 +117,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
             throw new RepositoryAtCapacityException(max);
         }
 
-        var event = new RepositoryWalEvent.AggregateInserted(aggregateType, aggregate);
+        var event = new RepositoryWalEvent.AggregateInserted<>(aggregateType, aggregate);
         wal().append(event);
         doInsert(aggregate);
     }
@@ -161,18 +160,18 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         if (!aggregates.containsKey(id)) {
             return;
         }
-        var event = new RepositoryWalEvent.AggregateRemoved(aggregateType, id);
+        var event = new RepositoryWalEvent.AggregateRemoved<>(aggregateType, id);
         wal().append(event);
         doRemove(id);
     }
 
-    private void applyEvent(RepositoryWalEvent event) {
+    private void applyEvent(RepositoryWalEvent<T, ID, S> event) {
         switch (event) {
-            case RepositoryWalEvent.AggregateInserted aggregateInserted -> {
+            case RepositoryWalEvent.AggregateInserted<T, ID, S> aggregateInserted -> {
                 var aggregate = createFromState(aggregateInserted.aggregateId(), aggregateInserted.aggregateState());
                 doInsert(aggregate);
             }
-            case RepositoryWalEvent.AggregateRemoved aggregateRemoved -> {
+            case RepositoryWalEvent.AggregateRemoved<T, ID, S> aggregateRemoved -> {
                 ID id = aggregateRemoved.aggregateId();
                 doRemove(id);
             }
@@ -192,12 +191,12 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         afterRemove(id);
     }
 
-    private boolean supportsEvent(AggregateWalEvent event) {
+    private boolean supportsEvent(AggregateWalEvent<?, ?, ?, ?> event) {
         return event.aggregateType().equals(aggregateType);
     }
 
-    private void applyEvent(AggregateWalEvent event) {
-        ID id = event.id();
+    private void applyEvent(AggregateWalEvent<T, ID, S, E> event) {
+        ID id = event.aggregateId();
         T aggregate = aggregates.get(id);
         if (aggregate == null) {
             throw new NonExistentAggregateException(aggregateType, id);
@@ -205,13 +204,13 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         event.forEach(aggregate::applyEvent);
     }
 
-    private boolean supportsEvent(RepositoryWalEvent event) {
+    private boolean supportsEvent(RepositoryWalEvent<?, ?, ?> event) {
         return event.aggregateType().equals(aggregateType);
     }
 
-    private void applySnapshot(RepositoryWalSnapshot snapshot) {
+    private void applySnapshot(RepositoryWalSnapshot<T, ID, S> snapshot) {
         aggregates.clear();
-        snapshot.forEach((BiConsumer<ID, S>) (id, state) -> {
+        snapshot.forEach((id, state) -> {
             var aggregate = createFromState(id, state);
             if (aggregates.putIfAbsent(id, aggregate) != null) {
                 // This should never happen unless the WAL is corrupt.
@@ -220,12 +219,12 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         });
     }
 
-    private boolean supportsSnapshot(RepositoryWalSnapshot snapshot) {
+    private boolean supportsSnapshot(RepositoryWalSnapshot<?, ?, ?> snapshot) {
         return snapshot.aggregateType().equals(aggregateType);
     }
 
-    private void createSnapshot(WriteAheadLog.SnapshotWriter<RepositoryWalSnapshot> snapshotWriter) {
-        snapshotWriter.write(new RepositoryWalSnapshot(aggregateType, aggregates.values()));
+    private void createSnapshot(WriteAheadLog.SnapshotWriter<RepositoryWalSnapshot<T, ID, S>> snapshotWriter) {
+        snapshotWriter.write(RepositoryWalSnapshot.of(aggregateType, aggregates.values()));
     }
 
     /// Finds all aggregates that match the given filter.

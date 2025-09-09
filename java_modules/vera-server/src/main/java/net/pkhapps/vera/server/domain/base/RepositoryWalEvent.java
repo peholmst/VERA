@@ -19,27 +19,34 @@ package net.pkhapps.vera.server.domain.base;
 import net.pkhapps.vera.server.util.wal.WalEvent;
 
 /// Base class for WAL events written by a repository.
-abstract sealed class RepositoryWalEvent implements WalEvent {
+abstract sealed class RepositoryWalEvent<T extends Aggregate<ID, S, ?>, ID extends Identifier, S extends Record> implements WalEvent {
 
-    private final Class<? extends Aggregate<?, ?, ?>> aggregateType;
+    private final Class<T> aggregateType;
 
-    protected RepositoryWalEvent(Class<? extends Aggregate<?, ?, ?>> aggregateType) {
+    RepositoryWalEvent(Class<T> aggregateType) {
         this.aggregateType = aggregateType;
     }
 
-    public Class<? extends Aggregate<?, ?, ?>> aggregateType() {
+    public Class<T> aggregateType() {
         return aggregateType;
     }
 
-    static final class AggregateInserted extends RepositoryWalEvent {
+    /// WAL event written when an aggregate is inserted into the repository.
+    static final class AggregateInserted<T extends Aggregate<ID, S, ?>, ID extends Identifier, S extends Record> extends RepositoryWalEvent<T, ID, S> {
 
-        private final Identifier id;
-        private final Record state;
+        private final ID id;
+        private final S state;
 
-        public <T extends Aggregate<?, ?, ?>> AggregateInserted(Class<T> aggregateType, T aggregate) {
+        public AggregateInserted(Class<T> aggregateType, T aggregate) {
             super(aggregateType);
             this.id = aggregate.id();
             this.state = aggregate.toState();
+        }
+
+        public AggregateInserted(Class<T> aggregateType, ID id, S state) {
+            super(aggregateType);
+            this.id = id;
+            this.state = state;
         }
 
         @Override
@@ -47,22 +54,27 @@ abstract sealed class RepositoryWalEvent implements WalEvent {
             return "%s[aggregateType=%s, id=%s]".formatted(getClass().getSimpleName(), aggregateType().getSimpleName(), id);
         }
 
-        @SuppressWarnings("unchecked")
-        public <ID extends Identifier> ID aggregateId() {
-            return (ID) id;
+        /// Returns the ID of the inserted aggregate.
+        ///
+        /// @return the aggregate ID
+        public ID aggregateId() {
+            return id;
         }
 
-        @SuppressWarnings("unchecked")
-        public <S extends Record> S aggregateState() {
-            return (S) state;
+        /// Returns the initial state of the inserted aggregate.
+        ///
+        /// @return the aggregate state
+        public S aggregateState() {
+            return state;
         }
     }
 
-    static final class AggregateRemoved extends RepositoryWalEvent {
+    /// WAL event written when an aggregate is removed from the repository.
+    static final class AggregateRemoved<T extends Aggregate<ID, S, ?>, ID extends Identifier, S extends Record> extends RepositoryWalEvent<T, ID, S> {
 
-        private final Identifier id;
+        private final ID id;
 
-        public <T extends Aggregate<ID, ?, ?>, ID extends Identifier> AggregateRemoved(Class<T> aggregateType, ID aggregateId) {
+        public AggregateRemoved(Class<T> aggregateType, ID aggregateId) {
             super(aggregateType);
             this.id = aggregateId;
         }
@@ -72,9 +84,11 @@ abstract sealed class RepositoryWalEvent implements WalEvent {
             return "%s[aggregateType=%s, id=%s]".formatted(getClass().getSimpleName(), aggregateType().getSimpleName(), id);
         }
 
-        @SuppressWarnings("unchecked")
-        public <ID extends Identifier> ID aggregateId() {
-            return (ID) id;
+        /// Returns the ID of the removed aggregate.
+        ///
+        /// @return the aggregate ID
+        public ID aggregateId() {
+            return id;
         }
     }
 }

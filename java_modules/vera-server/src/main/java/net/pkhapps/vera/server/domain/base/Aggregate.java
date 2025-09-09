@@ -18,8 +18,6 @@ package net.pkhapps.vera.server.domain.base;
 
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
 
-import java.util.List;
-
 /// Base class for aggregates.
 ///
 /// In this application, aggregates are active objects that are always stored in memory. Any changes made to their state
@@ -56,8 +54,8 @@ public abstract class Aggregate<ID extends Identifier, S extends Record, E> {
     /// @throws net.pkhapps.vera.server.util.wal.WriteAheadLogException if the events could not be written to the WAL
     /// @see #appendToWal(Object)
     protected synchronized final void appendToWal(Iterable<E> events) {
-        var event = new AggregateWalEvent(this, events);
-        wal.append(event);
+        var walEvent = AggregateWalEvent.of(this, events);
+        wal.append(walEvent);
         events.forEach(this::applyEvent);
     }
 
@@ -67,8 +65,10 @@ public abstract class Aggregate<ID extends Identifier, S extends Record, E> {
     /// @param event the event to write to the WAL
     /// @throws net.pkhapps.vera.server.util.wal.WriteAheadLogException if the event could not be written to the WAL
     /// @see #appendToWal(Iterable)
-    protected final void appendToWal(E event) {
-        appendToWal(List.of(event));
+    protected synchronized final void appendToWal(E event) {
+        var walEvent = AggregateWalEvent.of(this, event);
+        wal.append(walEvent);
+        applyEvent(event);
     }
 
     /// Creates a representation of the aggregate's *current state*. This is used by a [Repository] to create snapshots

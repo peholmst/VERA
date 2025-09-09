@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.domain.base;
 
+/// Exception thrown by a [Repository] when trying to save an aggregate with an ID that already exists.
 public class DuplicateIdentifierException extends RepositoryException {
 
     public DuplicateIdentifierException(Identifier id) {

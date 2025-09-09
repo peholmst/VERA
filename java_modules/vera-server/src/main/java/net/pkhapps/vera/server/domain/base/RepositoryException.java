@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.domain.base;
 
+/// Base class for exceptions thrown by a [Repository].
 public class RepositoryException extends RuntimeException {
 
     public RepositoryException(String message) {

@@ -26,40 +26,75 @@ import java.util.stream.StreamSupport;
 ///
 /// @see RepositoryWalEvent
 /// @see RepositoryWalSnapshot
-final class AggregateWalEvent implements WalEvent {
+final class AggregateWalEvent<T extends Aggregate<ID, S, E>, ID extends Identifier, S extends Record, E> implements WalEvent {
 
-    private final Class<? extends Aggregate<?, ?, ?>> aggregateType;
-    private final Identifier id;
-    private final List<?> entries;
+    private final Class<T> aggregateType;
+    private final ID aggregateId;
+    private final List<E> events;
 
-    public <T extends Aggregate<ID, ?, E>, ID extends Identifier, E> AggregateWalEvent(T aggregate, Iterable<E> entries) {
-        this(aggregate.getClass(), aggregate.id(), entries);
+    /// Constructor used by the Serde and by factory methods. Clients should not call this method directly.
+    ///
+    /// **Note:** This constructor does *not* copy the `events` list for performance reasons. Callers must make sure the
+    /// list is effectively immutable.
+    ///
+    /// @param aggregateType the type of the aggregate that wrote the events
+    /// @param aggregateId   the ID of the aggregate that wrote the events
+    /// @param events        the list of events written by the aggregate
+    AggregateWalEvent(Class<T> aggregateType, ID aggregateId, List<E> events) {
+        this.aggregateType = aggregateType;
+        this.aggregateId = aggregateId;
+        this.events = events;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public AggregateWalEvent(Class<? extends Aggregate> aggregateType, Identifier id, Iterable<?> entries) {
-        this.aggregateType = (Class<? extends Aggregate<?, ?, ?>>) aggregateType;
-        this.id = id;
-        this.entries = StreamSupport.stream(entries.spliterator(), false).map(Record.class::cast).toList();
+    /// Creates a new `AggregateWalEvent`.
+    ///
+    /// @param aggregate the aggregate that wrote the events
+    /// @param events    the events written by the aggregate
+    @SuppressWarnings("unchecked")
+    public static <T extends Aggregate<ID, S, E>, ID extends Identifier, S extends Record, E> AggregateWalEvent<T, ID, S, E> of(T aggregate, Iterable<E> events) {
+        return new AggregateWalEvent<>((Class<T>) aggregate.getClass(), aggregate.id(), StreamSupport.stream(events.spliterator(), false).toList());
+    }
+
+    /// Creates a new `AggregateWalEvent`.
+    ///
+    /// @param aggregate the aggregate that wrote the events
+    /// @param event     the event written by the aggregate
+    @SuppressWarnings("unchecked")
+    public static <T extends Aggregate<ID, S, E>, ID extends Identifier, S extends Record, E> AggregateWalEvent<T, ID, S, E> of(T aggregate, E event) {
+        return new AggregateWalEvent<>((Class<T>) aggregate.getClass(), aggregate.id(), List.of(event));
     }
 
     @Override
     public String toString() {
-        return "%s[aggregateType=%s, id=%s, entryCount=%d]".formatted(AggregateWalEvent.class.getSimpleName(),
-                aggregateType.getSimpleName(), id, entries.size());
+        return "%s[aggregateType=%s, id=%s, eventCount=%d]".formatted(AggregateWalEvent.class.getSimpleName(),
+                aggregateType.getSimpleName(), aggregateId, events.size());
     }
 
-    @SuppressWarnings("unchecked")
-    public <S> void forEach(Consumer<S> consumer) {
-        entries.forEach(entry -> consumer.accept((S) entry));
+    /// Performs the given `action` for each aggregate event in this WAL event.
+    ///
+    /// @param action the action to perform for each aggregate event
+    public void forEach(Consumer<E> action) {
+        events.forEach(action);
     }
 
-    public Class<? extends Aggregate<?, ?, ?>> aggregateType() {
+    /// Returns the number of aggregate events in this WAL event.
+    ///
+    /// @return the number of aggregate events
+    public int size() {
+        return events.size();
+    }
+
+    /// Returns the type of the aggregate that owns this WAL event.
+    ///
+    /// @return the aggregate type
+    public Class<T> aggregateType() {
         return aggregateType;
     }
 
-    @SuppressWarnings("unchecked")
-    public <ID extends Identifier> ID id() {
-        return (ID) id;
+    /// Returns the ID of the aggregate that owns this WAL event.
+    ///
+    /// @return the aggregate ID
+    public ID aggregateId() {
+        return aggregateId;
     }
 }

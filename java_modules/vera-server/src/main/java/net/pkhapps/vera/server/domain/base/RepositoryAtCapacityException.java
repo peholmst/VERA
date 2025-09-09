@@ -16,6 +16,8 @@
 
 package net.pkhapps.vera.server.domain.base;
 
+/// Exception thrown by a [Repository] when an attempt is made to insert a new aggregate and the repository is already
+/// at capacity (i.e., it has no room for more aggregates).
 public class RepositoryAtCapacityException extends RepositoryException {
 
     public RepositoryAtCapacityException(int capacity) {
