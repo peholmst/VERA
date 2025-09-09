@@ -16,48 +16,30 @@
 
 package net.pkhapps.vera.server.domain.model.geo;
 
+import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
-import net.pkhapps.vera.server.util.serde.SerdeContext;
-import net.pkhapps.vera.server.util.serde.UnsupportedTypeIdException;
-
-import java.util.Set;
 
 /// [Serde] for [Wgs84Point].
 public class Wgs84PointSerde implements Serde<Wgs84Point> {
 
-    public static final int TYPE_ID = 10;
+    private static final Wgs84PointSerde INSTANCE = new Wgs84PointSerde();
 
-    @Override
-    public void serialize(SerdeContext context, Wgs84Point object, Output output) {
-        var writer = context.newWriter(TYPE_ID);
-        writer.putDouble(object.latitude());
-        writer.putDouble(object.longitude());
-        writer.writeTo(output);
+    public static Wgs84PointSerde instance() {
+        return INSTANCE;
     }
 
     @Override
-    public int computeSize(SerdeContext context, Wgs84Point object) {
-        return context.newSizeCalculator()
-                .addDouble() // Latitude
-                .addDouble() // Longitude
-                .size();
+    public void writeTo(Wgs84Point object, Output output) {
+        output.writeDouble(object.latitude());
+        output.writeDouble(object.longitude());
     }
 
     @Override
-    public Wgs84Point deserialize(SerdeContext context, int typeId, byte[] payload) {
-        if (typeId != TYPE_ID) {
-            throw new UnsupportedTypeIdException(typeId);
-        }
-        var reader = context.newReader(payload);
+    public Wgs84Point readFrom(Input input) {
         return new Wgs84Point(
-                reader.getDouble(),
-                reader.getDouble()
+                input.readDouble(),
+                input.readDouble()
         );
-    }
-
-    @Override
-    public Set<Integer> supportedTypeIds() {
-        return Set.of(TYPE_ID);
     }
 }
