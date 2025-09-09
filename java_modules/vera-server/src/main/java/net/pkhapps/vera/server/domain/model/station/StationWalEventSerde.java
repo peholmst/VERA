@@ -18,21 +18,25 @@ package net.pkhapps.vera.server.domain.model.station;
 
 import net.pkhapps.vera.server.domain.model.geo.Wgs84PointSerde;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualStringSerde;
+import net.pkhapps.vera.server.util.Deferred;
 import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
 import net.pkhapps.vera.server.util.serde.UnknownInputException;
 
 /// [Serde] for [net.pkhapps.vera.server.domain.model.station.Station.StationWalEvent].
-class StationWalEventSerde implements Serde<Station.StationWalEvent> {
+final class StationWalEventSerde implements Serde<Station.StationWalEvent> {
 
     private static final short TYPE_ID_SET_NAME = 1;
     private static final short TYPE_ID_SET_LOCATION = 2;
     private static final short TYPE_ID_SET_NOTE = 3;
-    private static final StationWalEventSerde INSTANCE = new StationWalEventSerde();
+    private static final Deferred<StationWalEventSerde> INSTANCE = new Deferred<>(StationWalEventSerde::new);
 
     public static StationWalEventSerde instance() {
-        return INSTANCE;
+        return INSTANCE.get();
+    }
+
+    private StationWalEventSerde() {
     }
 
     @Override

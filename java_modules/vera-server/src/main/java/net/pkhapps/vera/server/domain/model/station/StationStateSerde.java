@@ -18,17 +18,21 @@ package net.pkhapps.vera.server.domain.model.station;
 
 import net.pkhapps.vera.server.domain.model.geo.Wgs84PointSerde;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualStringSerde;
+import net.pkhapps.vera.server.util.Deferred;
 import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
 
 /// [Serde] for [net.pkhapps.vera.server.domain.model.station.Station.StationState].
-class StationStateSerde implements Serde<Station.StationState> {
+final class StationStateSerde implements Serde<Station.StationState> {
 
-    private static final StationStateSerde INSTANCE = new StationStateSerde();
+    private static final Deferred<StationStateSerde> INSTANCE = new Deferred<>(StationStateSerde::new);
 
     public static StationStateSerde instance() {
-        return INSTANCE;
+        return INSTANCE.get();
+    }
+
+    private StationStateSerde() {
     }
 
     @Override

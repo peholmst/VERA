@@ -16,17 +16,21 @@
 
 package net.pkhapps.vera.server.domain.model.geo;
 
+import net.pkhapps.vera.server.util.Deferred;
 import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
 
 /// [Serde] for [Wgs84Point].
-public class Wgs84PointSerde implements Serde<Wgs84Point> {
+public final class Wgs84PointSerde implements Serde<Wgs84Point> {
 
-    private static final Wgs84PointSerde INSTANCE = new Wgs84PointSerde();
+    private static final Deferred<Wgs84PointSerde> INSTANCE = new Deferred<>(Wgs84PointSerde::new);
 
     public static Wgs84PointSerde instance() {
-        return INSTANCE;
+        return INSTANCE.get();
+    }
+
+    private Wgs84PointSerde() {
     }
 
     @Override

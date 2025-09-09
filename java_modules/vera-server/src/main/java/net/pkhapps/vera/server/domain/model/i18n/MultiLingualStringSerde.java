@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.domain.model.i18n;
 
+import net.pkhapps.vera.server.util.Deferred;
 import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
@@ -24,12 +25,15 @@ import java.util.HashMap;
 import java.util.Locale;
 
 /// [Serde] for [MultiLingualString].
-public class MultiLingualStringSerde implements Serde<MultiLingualString> {
+public final class MultiLingualStringSerde implements Serde<MultiLingualString> {
 
-    private static final MultiLingualStringSerde INSTANCE = new MultiLingualStringSerde();
+    private static final Deferred<MultiLingualStringSerde> INSTANCE = new Deferred<>(MultiLingualStringSerde::new);
 
     public static MultiLingualStringSerde instance() {
-        return INSTANCE;
+        return INSTANCE.get();
+    }
+
+    private MultiLingualStringSerde() {
     }
 
     @Override
