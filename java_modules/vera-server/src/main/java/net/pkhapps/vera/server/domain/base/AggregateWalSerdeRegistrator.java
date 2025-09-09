@@ -19,8 +19,7 @@ package net.pkhapps.vera.server.domain.base;
 import net.pkhapps.vera.server.util.serde.Serde;
 import net.pkhapps.vera.server.util.wal.WalSerde;
 import net.pkhapps.vera.server.util.wal.WalSerdeRegistrator;
-
-import java.util.function.Consumer;
+import net.pkhapps.vera.server.util.wal.WalSerdeRegistry;
 
 /// Base class for [WalSerdeRegistrator]s for a specific aggregate.
 ///
@@ -53,9 +52,9 @@ public abstract class AggregateWalSerdeRegistrator<T extends Aggregate<ID, S, E>
     }
 
     @Override
-    public final void registerSerde(Consumer<WalSerde<?>> serdeRegistry) {
-        serdeRegistry.accept(new AggregateWalEventSerde<>(aggregateSerdeGroupId + 1, aggregateType, idSerde, eventSerde));
-        serdeRegistry.accept(new RepositoryWalEventSerde<>(aggregateSerdeGroupId + 2, aggregateType, idSerde, stateSerde));
-        serdeRegistry.accept(new RepositoryWalSnapshotSerde<>(aggregateSerdeGroupId + 3, aggregateType, idSerde, stateSerde));
+    public final void registerSerdes(WalSerdeRegistry serdeRegistry) {
+        serdeRegistry.registerWalSerde(new AggregateWalEventSerde<>(aggregateSerdeGroupId + 1, aggregateType, idSerde, eventSerde));
+        serdeRegistry.registerWalSerde(new RepositoryWalEventSerde<>(aggregateSerdeGroupId + 2, aggregateType, idSerde, stateSerde));
+        serdeRegistry.registerWalSerde(new RepositoryWalSnapshotSerde<>(aggregateSerdeGroupId + 3, aggregateType, idSerde, stateSerde));
     }
 }
