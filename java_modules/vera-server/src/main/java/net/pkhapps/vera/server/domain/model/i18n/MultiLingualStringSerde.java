@@ -16,61 +16,38 @@
 
 package net.pkhapps.vera.server.domain.model.i18n;
 
+import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
-import net.pkhapps.vera.server.util.serde.SerdeContext;
-import net.pkhapps.vera.server.util.serde.UnsupportedTypeIdException;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
-import java.util.Set;
 
 /// [Serde] for [MultiLingualString].
 public class MultiLingualStringSerde implements Serde<MultiLingualString> {
 
-    public final int TYPE_ID = 11;
+    private static final MultiLingualStringSerde INSTANCE = new MultiLingualStringSerde();
 
-    @Override
-    public void serialize(SerdeContext context, MultiLingualString object, Output output) {
-        var writer = context.newWriter(TYPE_ID);
-        writer.putInteger(object.size());
-        object.entries().forEach(entry -> {
-            writer.putString(entry.locale().toLanguageTag());
-            writer.putString(entry.value());
-        });
-        writer.writeTo(output);
+    public static MultiLingualStringSerde instance() {
+        return INSTANCE;
     }
 
     @Override
-    public int computeSize(SerdeContext context, MultiLingualString object) {
-        var calculator = context.newSizeCalculator();
-        calculator.addInteger(); // Size
-        object.entries().forEach(entry -> {
-            calculator.addString(entry.locale().toLanguageTag());
-            calculator.addString(entry.value());
+    public void writeTo(MultiLingualString object, Output output) {
+        output.writeInteger(object.size());
+        object.forEach((locale, value) -> {
+            output.writeString(locale.toLanguageTag());
+            output.writeString(value);
         });
-        return calculator.size();
     }
 
     @Override
-    public MultiLingualString deserialize(SerdeContext context, int typeId, byte[] payload) {
-        if (typeId != TYPE_ID) {
-            throw new UnsupportedTypeIdException(typeId);
-        }
-        var reader = context.newReader(payload);
-        var size = reader.getInteger();
-        var entries = new ArrayList<MultiLingualString.LocalizedString>(size);
+    public MultiLingualString readFrom(Input input) {
+        var size = input.readInteger();
+        var entries = new HashMap<Locale, String>(size);
         for (int i = 0; i < size; ++i) {
-            entries.add(new MultiLingualString.LocalizedString(
-                    Locale.forLanguageTag(reader.getString()),
-                    reader.getString())
-            );
+            entries.put(Locale.forLanguageTag(input.readString()), input.readString());
         }
-        return MultiLingualString.of(entries);
-    }
-
-    @Override
-    public Set<Integer> supportedTypeIds() {
-        return Set.of(TYPE_ID);
+        return new MultiLingualString(entries);
     }
 }
