@@ -16,9 +16,10 @@
 
 package net.pkhapps.vera.server.util.serde;
 
-public class UnsupportedTypeException extends SerdeException {
+// TODO Document me!
+public class UnknownInputException extends SerdeException {
 
-    public UnsupportedTypeException(Class<?> type) {
-        super("Unsupported type: " + type);
+    public UnknownInputException(String message) {
+        super(message);
     }
 }

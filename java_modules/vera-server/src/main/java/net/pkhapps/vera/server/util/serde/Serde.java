@@ -16,15 +16,10 @@
 
 package net.pkhapps.vera.server.util.serde;
 
-import java.util.Set;
-
+// TODO Document me!
 public interface Serde<T> {
 
-    void serialize(SerdeContext context, T object, Output output);
+    void writeTo(T object, Output output);
 
-    int computeSize(SerdeContext context, T object);
-
-    T deserialize(SerdeContext context, int typeId, byte[] payload);
-
-    Set<Integer> supportedTypeIds();
+    T readFrom(Input input);
 }

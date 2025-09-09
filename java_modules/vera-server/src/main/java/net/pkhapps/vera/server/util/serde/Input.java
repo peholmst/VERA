@@ -16,9 +16,25 @@
 
 package net.pkhapps.vera.server.util.serde;
 
-public class UnsupportedTypeIdException extends SerdeException {
+import org.jspecify.annotations.Nullable;
 
-    public UnsupportedTypeIdException(int typeId) {
-        super("Unsupported typeId: " + typeId);
-    }
+// TODO Document me!
+public interface Input {
+
+    long readLong();
+
+    int readInteger();
+
+    short readShort();
+
+    double readDouble();
+
+    String readString();
+
+    @Nullable
+    String readNullableString();
+
+    byte readByte();
+
+    byte[] readBytes(int length);
 }

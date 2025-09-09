@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.util.serde;
 
+// TODO Document me!
 public class SerdeException extends RuntimeException {
 
     public SerdeException(String message) {

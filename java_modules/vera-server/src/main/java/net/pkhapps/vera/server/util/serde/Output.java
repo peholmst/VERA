@@ -16,5 +16,23 @@
 
 package net.pkhapps.vera.server.util.serde;
 
+import org.jspecify.annotations.Nullable;
+
+// TODO Document me!
 public interface Output {
+    void writeLong(long l);
+
+    void writeInteger(int i);
+
+    void writeShort(short s);
+
+    void writeDouble(double d);
+
+    void writeString(String s);
+
+    void writeNullableString(@Nullable String s);
+
+    void writeByte(byte b);
+
+    void writeBytes(byte[] bytes);
 }
