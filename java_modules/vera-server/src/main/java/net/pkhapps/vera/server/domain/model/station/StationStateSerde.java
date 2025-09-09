@@ -16,53 +16,34 @@
 
 package net.pkhapps.vera.server.domain.model.station;
 
-import net.pkhapps.vera.server.domain.model.geo.Wgs84Point;
-import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
+import net.pkhapps.vera.server.domain.model.geo.Wgs84PointSerde;
+import net.pkhapps.vera.server.domain.model.i18n.MultiLingualStringSerde;
+import net.pkhapps.vera.server.util.serde.Input;
 import net.pkhapps.vera.server.util.serde.Output;
 import net.pkhapps.vera.server.util.serde.Serde;
-import net.pkhapps.vera.server.util.serde.SerdeContext;
-import net.pkhapps.vera.server.util.serde.UnsupportedTypeIdException;
-
-import java.util.Set;
 
 /// [Serde] for [net.pkhapps.vera.server.domain.model.station.Station.StationState].
 class StationStateSerde implements Serde<Station.StationState> {
 
-    static final int TYPE_ID = 100;
+    private static final StationStateSerde INSTANCE = new StationStateSerde();
 
-    @Override
-    public void serialize(SerdeContext context, Station.StationState object, Output output) {
-        var writer = context.newWriter(TYPE_ID);
-        writer.putObject(object.name());
-        writer.putObject(object.location());
-        writer.putNullableString(object.note());
-        writer.writeTo(output);
+    public static StationStateSerde instance() {
+        return INSTANCE;
     }
 
     @Override
-    public int computeSize(SerdeContext context, Station.StationState object) {
-        return context.newSizeCalculator()
-                .addObject(object.name())
-                .addObject(object.location())
-                .addNullableString(object.note())
-                .size();
+    public void writeTo(Station.StationState object, Output output) {
+        MultiLingualStringSerde.instance().writeTo(object.name(), output);
+        Wgs84PointSerde.instance().writeTo(object.location(), output);
+        output.writeNullableString(object.note());
     }
 
     @Override
-    public Station.StationState deserialize(SerdeContext context, int typeId, byte[] payload) {
-        if (typeId != TYPE_ID) {
-            throw new UnsupportedTypeIdException(typeId);
-        }
-        var reader = context.newReader(payload);
+    public Station.StationState readFrom(Input input) {
         return new Station.StationState(
-                reader.getObject(MultiLingualString.class),
-                reader.getObject(Wgs84Point.class),
-                reader.getNullableString()
+                MultiLingualStringSerde.instance().readFrom(input),
+                Wgs84PointSerde.instance().readFrom(input),
+                input.readNullableString()
         );
-    }
-
-    @Override
-    public Set<Integer> supportedTypeIds() {
-        return Set.of(TYPE_ID);
     }
 }
