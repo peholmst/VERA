@@ -225,6 +225,7 @@ sealed abstract class WalFile implements AutoCloseable {
 
         private final FileChannel fileChannel;
         private long nextRecordNumber;
+        private final ScratchBuffer scratch = new ScratchBuffer();
 
         private WritableWalFile(Path file, long defaultNextRecordNumber) {
             super(file);
@@ -293,7 +294,7 @@ sealed abstract class WalFile implements AutoCloseable {
 
         /// Writes the given payload to the WAL in a new record.
         ///
-        /// @param payload       the payload itself
+        /// @param payload the payload itself
         /// @return the number of the written record
         public long write(byte[] payload) {
             return write(payload, 0, payload.length);
@@ -306,15 +307,19 @@ sealed abstract class WalFile implements AutoCloseable {
         /// @param payloadLength the length of the payload
         /// @return the number of the written record
         public long write(byte[] payload, int payloadOffset, int payloadLength) {
-            tryWriteRecord(fileChannel, payload, payloadOffset, payloadLength, nextRecordNumber);
+            tryWriteRecord(fileChannel, payload, payloadOffset, payloadLength, nextRecordNumber, scratch);
             return nextRecordNumber++;
         }
 
         /// Visible for testing, would otherwise be private.
-        static ByteBuffer writeRecord(byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
+        static ByteBuffer writeRecord(byte[] payload, int payloadLength, long recordNumber) {
+            return writeRecord(payload, 0, payloadLength, recordNumber, new ScratchBuffer());
+        }
+
+        private static ByteBuffer writeRecord(byte[] payload, int payloadOffset, int payloadLength, long recordNumber, ScratchBuffer scratch) {
             var size = HEADER_SIZE   // Header
                     + payloadLength;  // Payload
-            var buffer = ByteBuffer.allocate(size);
+            var buffer = ByteBuffer.wrap(scratch.ensureCapacity(size));
             var checksum = calculateChecksum(payload, payloadOffset, payloadLength, recordNumber);
 
             buffer.putInt(MAGIC);
@@ -326,8 +331,8 @@ sealed abstract class WalFile implements AutoCloseable {
             return buffer;
         }
 
-        private static void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
-            var buffer = writeRecord(payload, payloadOffset, payloadLength, recordNumber);
+        private static void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength, long recordNumber, ScratchBuffer scratch) {
+            var buffer = writeRecord(payload, payloadOffset, payloadLength, recordNumber, scratch);
             try {
                 while (buffer.hasRemaining()) {
                     //noinspection ResultOfMethodCallIgnored

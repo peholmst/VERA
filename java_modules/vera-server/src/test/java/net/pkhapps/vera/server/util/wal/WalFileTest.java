@@ -18,6 +18,7 @@ package net.pkhapps.vera.server.util.wal;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -48,6 +49,20 @@ class WalFileTest {
         try (var paths = Files.walk(directory)) {
             //noinspection ResultOfMethodCallIgnored
             paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
+    }
+
+    @Test
+    @Disabled
+    void small_stress_test() {
+        var record_count = 5_000;
+        try (var file = WalFile.writable(directory.resolve("stress"), 1L)) {
+            var start = System.currentTimeMillis();
+            for (var i = 0; i < record_count; ++i) {
+                file.write(("hello world!" + 1).getBytes(StandardCharsets.UTF_8));
+            }
+            var end = System.currentTimeMillis();
+            System.out.println("Wrote " + record_count + " records in " + (end - start) + "ms");
         }
     }
 
@@ -164,7 +179,7 @@ class WalFileTest {
 
     private void writeCompleteRecord(FileChannel channel, String payload, long recordNumber) throws IOException {
         var payloadBuf = payload.getBytes(StandardCharsets.UTF_8);
-        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadBuf, 0, payloadBuf.length, recordNumber);
+        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadBuf, payloadBuf.length, recordNumber);
         while (recordBuf.hasRemaining()) {
             //noinspection ResultOfMethodCallIgnored
             channel.write(recordBuf);
@@ -173,7 +188,7 @@ class WalFileTest {
 
     private void writeIncompleteRecord(FileChannel channel, String payload, long recordNumber, int truncateAt) throws IOException {
         var payloadBuf = payload.getBytes(StandardCharsets.UTF_8);
-        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadBuf, 0, payloadBuf.length, recordNumber);
+        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadBuf, payloadBuf.length, recordNumber);
         var truncatedBuf = ByteBuffer.wrap(recordBuf.array(), 0, truncateAt);
         while (truncatedBuf.hasRemaining()) {
             //noinspection ResultOfMethodCallIgnored
