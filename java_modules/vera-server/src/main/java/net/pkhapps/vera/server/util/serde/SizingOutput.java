@@ -20,8 +20,12 @@ import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 
-// TODO Document me!
-class SizingOutput implements Output {
+/// Implementation of [Output] that does not write anything anywhere, but calculates the size in bytes of the data
+/// that would have been written.
+///
+/// This can be used for double-pass writes where the first pass calculates the size, and the second pass writes into
+/// a buffer with the correct size.
+public final class SizingOutput implements Output {
 
     private int size;
 
@@ -43,6 +47,11 @@ class SizingOutput implements Output {
     @Override
     public void writeDouble(double d) {
         size += Double.BYTES;
+    }
+
+    @Override
+    public void writeBoolean(boolean b) {
+        size += Byte.BYTES;
     }
 
     @Override
@@ -69,6 +78,9 @@ class SizingOutput implements Output {
         size += bytes.length;
     }
 
+    /// Returns the size of the data that has been "written" so far.
+    ///
+    /// @return the size of the written data in bytes.
     public int size() {
         return size;
     }
