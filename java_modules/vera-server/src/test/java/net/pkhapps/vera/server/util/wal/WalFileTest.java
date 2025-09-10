@@ -61,8 +61,8 @@ class WalFileTest {
     @Test
     void writing_records_increment_number() {
         try (var file = WalFile.writable(directory.resolve("increments"), 1L)) {
-            assertEquals(1L, file.write(10, "hello".getBytes(StandardCharsets.UTF_8)));
-            assertEquals(2L, file.write(20, "world!".getBytes(StandardCharsets.UTF_8)));
+            assertEquals(1L, file.write("hello".getBytes(StandardCharsets.UTF_8)));
+            assertEquals(2L, file.write("world!".getBytes(StandardCharsets.UTF_8)));
             assertEquals(3L, file.getNextRecordNumber());
         }
     }
@@ -70,8 +70,8 @@ class WalFileTest {
     @Test
     void next_record_number_read_from_existing_file() {
         try (var file = WalFile.writable(directory.resolve("next_record"), 1L)) {
-            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
-            file.write(20, "world!".getBytes(StandardCharsets.UTF_8));
+            file.write("hello".getBytes(StandardCharsets.UTF_8));
+            file.write("world!".getBytes(StandardCharsets.UTF_8));
         }
         try (var file = WalFile.writable(directory.resolve("next_record"), 1L)) {
             assertEquals(3L, file.getNextRecordNumber());
@@ -81,24 +81,24 @@ class WalFileTest {
     @Test
     void records_can_be_replayed_from_the_beginning() {
         try (var file = WalFile.writable(directory.resolve("replay"), 1L)) {
-            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
-            file.write(20, "world!".getBytes(StandardCharsets.UTF_8));
+            file.write("hello".getBytes(StandardCharsets.UTF_8));
+            file.write("world!".getBytes(StandardCharsets.UTF_8));
 
             var records = replay(file);
-            assertEquals(List.of("10:hello:1", "20:world!:2"), records);
+            assertEquals(List.of("hello:1", "world!:2"), records);
         }
     }
 
     @Test
     void records_can_be_replayed_from_readonly_file() {
         try (var file = WalFile.writable(directory.resolve("replay_readonly"), 1L)) {
-            file.write(10, "hello".getBytes(StandardCharsets.UTF_8));
-            file.write(20, "world!".getBytes(StandardCharsets.UTF_8));
+            file.write("hello".getBytes(StandardCharsets.UTF_8));
+            file.write("world!".getBytes(StandardCharsets.UTF_8));
         }
 
         try (var file = WalFile.readOnly(directory.resolve("replay_readonly"))) {
             var records = replay(file);
-            assertEquals(List.of("10:hello:1", "20:world!:2"), records);
+            assertEquals(List.of("hello:1", "world!:2"), records);
         }
     }
 
@@ -106,14 +106,14 @@ class WalFileTest {
     void replaying_skips_incomplete_header_in_last_record() throws IOException {
         var path = directory.resolve("replay_incomplete_header");
         try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-            writeCompleteRecord(channel, 10, "hello", 1L);
-            writeCompleteRecord(channel, 20, "world!", 2L);
-            writeIncompleteRecord(channel, 30, "incomplete header", 3L, WalFile.HEADER_SIZE - 1);
+            writeCompleteRecord(channel, "hello", 1L);
+            writeCompleteRecord(channel, "world!", 2L);
+            writeIncompleteRecord(channel, "incomplete header", 3L, WalFile.HEADER_SIZE - 1);
         }
 
         try (var file = WalFile.readOnly(path)) {
             var records = replay(file);
-            assertEquals(List.of("10:hello:1", "20:world!:2"), records);
+            assertEquals(List.of("hello:1", "world!:2"), records);
         }
     }
 
@@ -121,14 +121,14 @@ class WalFileTest {
     void replaying_skips_incomplete_payload_in_last_record() throws IOException {
         var path = directory.resolve("replay_incomplete_payload");
         try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-            writeCompleteRecord(channel, 10, "hello", 1L);
-            writeCompleteRecord(channel, 20, "world!", 2L);
-            writeIncompleteRecord(channel, 40, "incomplete payload", 3L, WalFile.HEADER_SIZE + 1);
+            writeCompleteRecord(channel, "hello", 1L);
+            writeCompleteRecord(channel, "world!", 2L);
+            writeIncompleteRecord(channel, "incomplete payload", 3L, WalFile.HEADER_SIZE + 1);
         }
 
         try (var file = WalFile.readOnly(path)) {
             var records = replay(file);
-            assertEquals(List.of("10:hello:1", "20:world!:2"), records);
+            assertEquals(List.of("hello:1", "world!:2"), records);
         }
     }
 
@@ -136,15 +136,15 @@ class WalFileTest {
     void writing_truncates_incomplete_last_record() throws IOException {
         var path = directory.resolve("truncate_incomplete_last_record");
         try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-            writeCompleteRecord(channel, 10, "hello", 1L);
-            writeCompleteRecord(channel, 20, "world!", 2L);
-            writeIncompleteRecord(channel, 30, "incomplete header", 3L, WalFile.HEADER_SIZE - 1);
+            writeCompleteRecord(channel, "hello", 1L);
+            writeCompleteRecord(channel, "world!", 2L);
+            writeIncompleteRecord(channel, "incomplete header", 3L, WalFile.HEADER_SIZE - 1);
         }
 
         try (var file = WalFile.writable(path, 1L)) {
-            file.write(40, "complete header".getBytes(StandardCharsets.UTF_8));
+            file.write("complete header".getBytes(StandardCharsets.UTF_8));
             var records = replay(file);
-            assertEquals(List.of("10:hello:1", "20:world!:2", "40:complete header:3"), records);
+            assertEquals(List.of("hello:1", "world!:2", "complete header:3"), records);
         }
     }
 
@@ -152,28 +152,28 @@ class WalFileTest {
     void writing_truncates_incomplete_only_record() throws IOException {
         var path = directory.resolve("truncate_incomplete_only_record");
         try (var channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-            writeIncompleteRecord(channel, 30, "incomplete header", 1L, WalFile.HEADER_SIZE - 1);
+            writeIncompleteRecord(channel, "incomplete header", 1L, WalFile.HEADER_SIZE - 1);
         }
 
         try (var file = WalFile.writable(path, 1L)) {
-            file.write(40, "complete header".getBytes(StandardCharsets.UTF_8));
+            file.write("complete header".getBytes(StandardCharsets.UTF_8));
             var records = replay(file);
-            assertEquals(List.of("40:complete header:1"), records);
+            assertEquals(List.of("complete header:1"), records);
         }
     }
 
-    private void writeCompleteRecord(FileChannel channel, int payloadTypeId, String payload, long recordNumber) throws IOException {
+    private void writeCompleteRecord(FileChannel channel, String payload, long recordNumber) throws IOException {
         var payloadBuf = payload.getBytes(StandardCharsets.UTF_8);
-        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadTypeId, payloadBuf, 0, payloadBuf.length, recordNumber);
+        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadBuf, 0, payloadBuf.length, recordNumber);
         while (recordBuf.hasRemaining()) {
             //noinspection ResultOfMethodCallIgnored
             channel.write(recordBuf);
         }
     }
 
-    private void writeIncompleteRecord(FileChannel channel, int payloadTypeId, String payload, long recordNumber, int truncateAt) throws IOException {
+    private void writeIncompleteRecord(FileChannel channel, String payload, long recordNumber, int truncateAt) throws IOException {
         var payloadBuf = payload.getBytes(StandardCharsets.UTF_8);
-        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadTypeId, payloadBuf, 0, payloadBuf.length, recordNumber);
+        var recordBuf = WalFile.WritableWalFile.writeRecord(payloadBuf, 0, payloadBuf.length, recordNumber);
         var truncatedBuf = ByteBuffer.wrap(recordBuf.array(), 0, truncateAt);
         while (truncatedBuf.hasRemaining()) {
             //noinspection ResultOfMethodCallIgnored
@@ -185,7 +185,7 @@ class WalFileTest {
         var records = new ArrayList<String>();
         file.replayAll(record -> {
             var payload = new String(record.payload(), 0, record.payloadLength(), StandardCharsets.UTF_8);
-            records.add("%d:%s:%d".formatted(record.payloadTypeId(), payload, record.recordNumber()));
+            records.add("%s:%d".formatted(payload, record.recordNumber()));
         });
         return records;
     }

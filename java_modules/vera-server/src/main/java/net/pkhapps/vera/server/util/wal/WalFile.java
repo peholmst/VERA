@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.util.wal;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,16 +35,15 @@ import java.util.zip.CRC32C;
 ///
 /// A WAL file record has the following format (name, size in bytes):
 ///
-/// `[header:28][payload:n]`
+/// `[header:24][payload:n]`
 ///
 /// A WAL file record header has the following format (name, size in bytes):
 ///
-/// `[magic:4][record number:8][checksum:8][type:4][length:4]`
+/// `[magic:4][record number:8][checksum:8][length:4]`
 ///
 /// * `magic`: always {@value #MAGIC}; acts as a marker for new records.
 /// * `record number`: a long containing the record number. Record numbers increment by one, but the caller decides what the first record number is when creating a new file.
-/// * `checksum`: a CRC32C checksum of `type`, `length`, `payload`, and `record number`.
-/// * `type`: an integer indicating the type of the payload. The caller decides what integers to use.
+/// * `checksum`: a CRC32C checksum of `length`, `payload`, and `record number`.
 /// * `length`: the length of the payload in bytes.
 ///
 /// There is no particular logic behind the ordering of the fields in the header, except the magic number at the start.
@@ -72,7 +72,6 @@ sealed abstract class WalFile implements AutoCloseable {
     static final int HEADER_SIZE = Integer.BYTES // Magic
             + Long.BYTES                         // Record number
             + Long.BYTES                         // Checksum
-            + Integer.BYTES                      // Type ID
             + Integer.BYTES;                     // Payload length
 
     protected final Path file;
@@ -81,10 +80,9 @@ sealed abstract class WalFile implements AutoCloseable {
         this.file = file;
     }
 
-    private static long calculateChecksum(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength,
+    private static long calculateChecksum(byte[] payload, int payloadOffset, int payloadLength,
                                           long recordNumber) {
         var crc = new CRC32C();
-        crc.update(payloadTypeId);
         crc.update(payloadLength);
         crc.update(payload, payloadOffset, payloadLength);
         crc.update((int) (recordNumber >>> 56) & 0xFF);
@@ -134,7 +132,7 @@ sealed abstract class WalFile implements AutoCloseable {
         }
     }
 
-    private static WalRecord tryReadRecord(FileChannel channel, ScratchBuffer scratchBuffer) {
+    private static @Nullable WalRecord tryReadRecord(FileChannel channel, ScratchBuffer scratchBuffer) {
         try {
             return tryReadRecord(channel, channel.position(), scratchBuffer);
         } catch (IOException ex) {
@@ -143,7 +141,7 @@ sealed abstract class WalFile implements AutoCloseable {
         }
     }
 
-    private static WalRecord tryReadRecord(FileChannel channel, long position, ScratchBuffer scratch) {
+    private static @Nullable WalRecord tryReadRecord(FileChannel channel, long position, ScratchBuffer scratch) {
         try {
             channel.position(position);
 
@@ -166,7 +164,6 @@ sealed abstract class WalFile implements AutoCloseable {
 
             var recordNumber = headerBuf.getLong();
             var checksum = headerBuf.getLong();
-            var payloadTypeId = headerBuf.getInt();
             var payloadLength = headerBuf.getInt();
 
             // Read payload
@@ -178,14 +175,14 @@ sealed abstract class WalFile implements AutoCloseable {
             }
 
             // Verify checksum
-            var actualChecksum = calculateChecksum(payloadTypeId, payload, 0, payloadLength, recordNumber);
+            var actualChecksum = calculateChecksum(payload, 0, payloadLength, recordNumber);
             if (actualChecksum != checksum) {
                 log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
                         recordNumber, position, checksum, actualChecksum);
                 throw new WalCorruptionException("Checksum mismatch");
             }
 
-            return new WalRecord(payloadTypeId, payload, payloadLength, recordNumber);
+            return new WalRecord(payload, payloadLength, recordNumber);
         } catch (IOException ex) {
             log.error("Error reading file", ex);
             throw new WalIOException("Error reading file", ex);
@@ -296,44 +293,41 @@ sealed abstract class WalFile implements AutoCloseable {
 
         /// Writes the given payload to the WAL in a new record.
         ///
-        /// @param payloadTypeId the type of the payload
         /// @param payload       the payload itself
         /// @return the number of the written record
-        public long write(int payloadTypeId, byte[] payload) {
-            return write(payloadTypeId, payload, 0, payload.length);
+        public long write(byte[] payload) {
+            return write(payload, 0, payload.length);
         }
 
         /// Writes the given payload to the WAL in a new record.
         ///
-        /// @param payloadTypeId the type of the payload
         /// @param payload       an array containing the payload
         /// @param payloadOffset the offset of the payload inside the array
         /// @param payloadLength the length of the payload
         /// @return the number of the written record
-        public long write(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength) {
-            tryWriteRecord(fileChannel, payloadTypeId, payload, payloadOffset, payloadLength, nextRecordNumber);
+        public long write(byte[] payload, int payloadOffset, int payloadLength) {
+            tryWriteRecord(fileChannel, payload, payloadOffset, payloadLength, nextRecordNumber);
             return nextRecordNumber++;
         }
 
         /// Visible for testing, would otherwise be private.
-        static ByteBuffer writeRecord(int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
+        static ByteBuffer writeRecord(byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
             var size = HEADER_SIZE   // Header
                     + payloadLength;  // Payload
             var buffer = ByteBuffer.allocate(size);
-            var checksum = calculateChecksum(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
+            var checksum = calculateChecksum(payload, payloadOffset, payloadLength, recordNumber);
 
             buffer.putInt(MAGIC);
             buffer.putLong(recordNumber);
             buffer.putLong(checksum);
-            buffer.putInt(payloadTypeId);
             buffer.putInt(payload.length);
             buffer.put(payload, payloadOffset, payloadLength);
             buffer.flip();
             return buffer;
         }
 
-        private static void tryWriteRecord(FileChannel channel, int payloadTypeId, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
-            var buffer = writeRecord(payloadTypeId, payload, payloadOffset, payloadLength, recordNumber);
+        private static void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength, long recordNumber) {
+            var buffer = writeRecord(payload, payloadOffset, payloadLength, recordNumber);
             try {
                 while (buffer.hasRemaining()) {
                     //noinspection ResultOfMethodCallIgnored
@@ -386,11 +380,10 @@ sealed abstract class WalFile implements AutoCloseable {
     /// *The `payload` array must not be referenced outside the consumer!* Consumers should instead either process the
     /// data directly, or copy the payload into another array for later processing.
     ///
-    /// @param payloadTypeId the type of the payload
     /// @param payload       an array containing the payload
     /// @param payloadLength the length of the payload in bytes
     /// @param recordNumber  the record number
-    record WalRecord(int payloadTypeId, byte[] payload, int payloadLength, long recordNumber) {
+    record WalRecord(byte[] payload, int payloadLength, long recordNumber) {
 
         long sizeOnDisk() {
             return HEADER_SIZE        // Header
@@ -399,7 +392,7 @@ sealed abstract class WalFile implements AutoCloseable {
     }
 
     private static class ScratchBuffer {
-        private byte[] buffer = null;
+        private byte @Nullable [] buffer = null;
 
         byte[] ensureCapacity(int length) {
             if (buffer == null || buffer.length < length) {
