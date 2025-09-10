@@ -21,6 +21,8 @@ import org.jspecify.annotations.Nullable;
 // TODO Document me!
 public interface Input {
 
+    void reset();
+
     long readLong();
 
     int readInteger();
@@ -28,6 +30,8 @@ public interface Input {
     short readShort();
 
     double readDouble();
+
+    boolean readBoolean();
 
     String readString();
 

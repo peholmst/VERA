@@ -28,6 +28,8 @@ public interface Output {
 
     void writeDouble(double d);
 
+    void writeBoolean(boolean b);
+
     void writeString(String s);
 
     void writeNullableString(@Nullable String s);
