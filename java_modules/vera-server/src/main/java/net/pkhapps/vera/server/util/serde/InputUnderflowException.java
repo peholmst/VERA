@@ -16,35 +16,14 @@
 
 package net.pkhapps.vera.server.util.serde;
 
-import org.jspecify.annotations.Nullable;
+/// Exception thrown by an [Input] when attempting to read past the limit of the underlying source.
+public class InputUnderflowException extends SerdeException {
 
-// TODO Document me!
-public interface Input {
+    public InputUnderflowException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    void reset();
-
-    long readLong();
-
-    int readInteger();
-
-    short readShort();
-
-    double readDouble();
-
-    boolean readBoolean();
-
-    String readString();
-
-    @Nullable
-    String readNullableString();
-
-    byte readByte();
-
-    void readBytes(byte[] dst);
-
-    default byte[] readBytes(int length) {
-        var b = new byte[length];
-        readBytes(b);
-        return b;
+    public InputUnderflowException(String message) {
+        super(message);
     }
 }

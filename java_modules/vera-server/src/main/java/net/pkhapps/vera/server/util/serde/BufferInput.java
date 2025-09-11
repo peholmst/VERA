@@ -18,6 +18,7 @@ package net.pkhapps.vera.server.util.serde;
 
 import org.jspecify.annotations.Nullable;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -67,56 +68,90 @@ public final class BufferInput implements Input {
 
     @Override
     public long readLong() {
-        return byteBuffer.getLong();
+        try {
+            return byteBuffer.getLong();
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public int readInteger() {
-        return byteBuffer.getInt();
+        try {
+            return byteBuffer.getInt();
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public short readShort() {
-        return byteBuffer.getShort();
+        try {
+            return byteBuffer.getShort();
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public double readDouble() {
-        return byteBuffer.getDouble();
+        try {
+            return byteBuffer.getDouble();
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public boolean readBoolean() {
-        return byteBuffer.get() == 1;
+        try {
+            return byteBuffer.get() == 1;
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public String readString() {
-        var size = byteBuffer.getInt();
-        var bytes = new byte[size];
-        byteBuffer.get(bytes);
-        return new String(bytes, StandardCharsets.UTF_8);
+        try {
+            var size = byteBuffer.getInt();
+            var bytes = new byte[size];
+            byteBuffer.get(bytes);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public @Nullable String readNullableString() {
-        var containsNull = byteBuffer.get() == 0;
-        if (containsNull) {
-            return null;
-        } else {
-            return readString();
+        try {
+            var containsNull = byteBuffer.get() == 0;
+            if (containsNull) {
+                return null;
+            } else {
+                return readString();
+            }
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
         }
     }
 
     @Override
     public byte readByte() {
-        return byteBuffer.get();
+        try {
+            return byteBuffer.get();
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
-    public byte[] readBytes(int length) {
-        var bytes = new byte[length];
-        byteBuffer.get(bytes);
-        return bytes;
+    public void readBytes(byte[] dst) {
+        try {
+            byteBuffer.get(dst);
+        } catch (BufferUnderflowException ex) {
+            throw new InputUnderflowException(ex.getMessage(), ex);
+        }
     }
 }

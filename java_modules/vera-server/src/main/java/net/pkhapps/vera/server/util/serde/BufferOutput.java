@@ -18,6 +18,7 @@ package net.pkhapps.vera.server.util.serde;
 
 import org.jspecify.annotations.Nullable;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -50,54 +51,90 @@ public final class BufferOutput implements Output {
 
     @Override
     public void writeLong(long l) {
-        byteBuffer.putLong(l);
+        try {
+            byteBuffer.putLong(l);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeInteger(int i) {
-        byteBuffer.putInt(i);
+        try {
+            byteBuffer.putInt(i);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeShort(short s) {
-        byteBuffer.putShort(s);
+        try {
+            byteBuffer.putShort(s);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeDouble(double d) {
-        byteBuffer.putDouble(d);
+        try {
+            byteBuffer.putDouble(d);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeBoolean(boolean b) {
-        byteBuffer.put(b ? (byte) 1 : (byte) 0);
+        try {
+            byteBuffer.put(b ? (byte) 1 : (byte) 0);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeString(String s) {
-        var b = s.getBytes(StandardCharsets.UTF_8);
-        byteBuffer.putInt(b.length);
-        byteBuffer.put(b);
+        try {
+            var b = s.getBytes(StandardCharsets.UTF_8);
+            byteBuffer.putInt(b.length);
+            byteBuffer.put(b);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeNullableString(@Nullable String s) {
-        if (s == null) {
-            byteBuffer.put((byte) 0);
-        } else {
-            byteBuffer.put((byte) 1);
-            writeString(s);
+        try {
+            if (s == null) {
+                byteBuffer.put((byte) 0);
+            } else {
+                byteBuffer.put((byte) 1);
+                writeString(s);
+            }
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
         }
     }
 
     @Override
     public void writeByte(byte b) {
-        byteBuffer.put(b);
+        try {
+            byteBuffer.put(b);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void writeBytes(byte[] bytes) {
-        byteBuffer.put(bytes);
+        try {
+            byteBuffer.put(bytes);
+        } catch (BufferOverflowException ex) {
+            throw new OutputOverflowException(ex.getMessage(), ex);
+        }
     }
 
     /// Returns the backing [ByteBuffer].
