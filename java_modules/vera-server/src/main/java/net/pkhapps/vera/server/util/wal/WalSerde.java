@@ -92,7 +92,16 @@ public abstract class WalSerde<T> implements Serde<T> {
         }
     }
 
+    /// Reads and returns the `serdeId` from the header of given `input`. This method does not reset the input and moves
+    /// its internal position ahead by the length of a long integer.
+    ///
+    /// This method has package visibility because it is used by the [WalSerdeManager]. It is placed in this class to
+    /// keep the methods dealing with the header format in the same file.
+    ///
+    /// @param input the input to read the header and serdeId from
+    /// @return the serdeId
     static int readSerdeId(Input input) {
-        throw new UnknownInputException("not implemented yet");
+        var header = input.readLong();
+        return (int) (header >> 32);
     }
 }
