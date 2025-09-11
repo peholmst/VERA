@@ -16,10 +16,23 @@
 
 package net.pkhapps.vera.server.util.serde;
 
-// TODO Document me!
+/// Interface for a "serde" that can *serialize* and *deserialize* objects of a specific type.
+///
+/// @param <T> the type of objects to serialize and deserialize
 public interface Serde<T> {
 
+    /// Writes the given `object` to the given `output`.
+    ///
+    /// @param object the object to write (serialize)
+    /// @param output the output destination to write to
+    /// @throws SerdeException if something goes wrong
     void writeTo(T object, Output output);
 
+    /// Reads an object from the given `input`.
+    ///
+    /// @param input the input source to read from
+    /// @return the deserialized object
+    /// @throws UnknownInputException if the input is unknown to this serde
+    /// @throws SerdeException        if something else goes wrong
     T readFrom(Input input);
 }

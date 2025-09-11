@@ -16,7 +16,7 @@
 
 package net.pkhapps.vera.server.util.serde;
 
-// TODO Document me!
+/// Exception thrown by a [Serde] when attempting to read data from an [Input] that has an unknown format.
 public class UnknownInputException extends SerdeException {
 
     public UnknownInputException(String message) {
