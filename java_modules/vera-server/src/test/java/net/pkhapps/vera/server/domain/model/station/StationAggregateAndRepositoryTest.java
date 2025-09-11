@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.server.domain.model;
+package net.pkhapps.vera.server.domain.model.station;
 
 import net.pkhapps.vera.server.domain.model.geo.Wgs84Point;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
-import net.pkhapps.vera.server.domain.model.station.StationId;
-import net.pkhapps.vera.server.domain.model.station.StationRepository;
 import net.pkhapps.vera.server.util.Locales;
 import net.pkhapps.vera.server.util.wal.TestInMemoryWal;
 import org.junit.jupiter.api.Test;
@@ -28,7 +26,7 @@ import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class StationTest {
+class StationAggregateAndRepositoryTest {
 
     private static final Wgs84Point POINT0 = new Wgs84Point(0, 0);
     private static final Wgs84Point POINT1 = new Wgs84Point(60.306738, 22.300907);
