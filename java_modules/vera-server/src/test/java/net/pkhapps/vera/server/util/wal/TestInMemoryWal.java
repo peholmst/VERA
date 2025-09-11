@@ -35,7 +35,8 @@ public class TestInMemoryWal implements WriteAheadLog, WriteAheadLogControl {
     private final List<SnapshotConsumerEntry<?>> snapshotConsumers = new ArrayList<>();
     private final List<SnapshotProducerEntry<?>> snapshotProducers = new ArrayList<>();
 
-    public synchronized <E extends WalEvent> void append(E event) {
+    @Override
+    public synchronized <E extends WalEvent> void append(E event, Durability durability) {
         log.debug("Appending event {}", event);
         events.add(event);
     }
