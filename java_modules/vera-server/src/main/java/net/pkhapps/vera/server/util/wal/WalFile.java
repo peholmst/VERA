@@ -465,15 +465,4 @@ sealed abstract class WalFile implements AutoCloseable {
                     + payloadLength;   // Payload
         }
     }
-
-    private static class ScratchBuffer {
-        private byte @Nullable [] buffer = null;
-
-        byte[] ensureCapacity(int length) {
-            if (buffer == null || buffer.length < length) {
-                buffer = new byte[length];
-            }
-            return buffer;
-        }
-    }
 }
