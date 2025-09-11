@@ -16,11 +16,13 @@
 
 package net.pkhapps.vera.server.domain.model.station;
 
+import net.pkhapps.vera.server.domain.base.NanoIdentifierSerde;
 import net.pkhapps.vera.server.domain.model.geo.Wgs84Point;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
 import net.pkhapps.vera.server.util.Locales;
-import net.pkhapps.vera.server.util.serde.SerdeTestUtils;
 import org.junit.jupiter.api.Test;
+
+import static net.pkhapps.vera.server.util.serde.SerdeTestUtils.assertSerializationAndDeserializationProducesEqualObject;
 
 class StationStateSerdeTest {
 
@@ -30,6 +32,18 @@ class StationStateSerdeTest {
                 MultiLingualString.of(Locales.FINNISH, "Asema 91", Locales.SWEDISH, "Station 91"),
                 new Wgs84Point(60.306738, 22.300907),
                 "This is a note");
-        SerdeTestUtils.assertSerializationAndDeserializationProducesEqualObject(StationStateSerde.instance(), state);
+        assertSerializationAndDeserializationProducesEqualObject(
+                StationStateSerde.instance(),
+                state
+        );
+    }
+
+    @Test
+    void serialize_deserialize_StationId() {
+        var id = StationId.randomStationId();
+        assertSerializationAndDeserializationProducesEqualObject(
+                NanoIdentifierSerde.of(StationId::of),
+                id
+        );
     }
 }
