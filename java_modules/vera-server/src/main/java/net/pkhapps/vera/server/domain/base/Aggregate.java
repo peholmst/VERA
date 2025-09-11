@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.domain.base;
 
+import net.pkhapps.vera.server.util.wal.Durability;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
 
 /// Base class for aggregates.
@@ -51,11 +52,12 @@ public abstract class Aggregate<ID extends Identifier, S extends Record, E> {
     /// that calls this method*. Instead, in-memory state changes should be implemented in [#applyEvent(Object)].
     ///
     /// @param events the events to write to the WAL
+    /// @param durability the durability of the write operation
     /// @throws net.pkhapps.vera.server.util.wal.WriteAheadLogException if the events could not be written to the WAL
-    /// @see #appendToWal(Object)
-    protected synchronized final void appendToWal(Iterable<E> events) {
+    /// @see #appendToWal(Object, Durability)
+    protected synchronized final void appendToWal(Iterable<E> events, Durability durability) {
         var walEvent = AggregateWalEvent.of(this, events);
-        wal.append(walEvent);
+        wal.append(walEvent, durability);
         events.forEach(this::applyEvent);
     }
 
@@ -63,11 +65,12 @@ public abstract class Aggregate<ID extends Identifier, S extends Record, E> {
     /// that calls this method*. Instead, in-memory state changes should be implemented in [#applyEvent(Object)].
     ///
     /// @param event the event to write to the WAL
+    /// @param durability the durability of the write operation
     /// @throws net.pkhapps.vera.server.util.wal.WriteAheadLogException if the event could not be written to the WAL
-    /// @see #appendToWal(Iterable)
-    protected synchronized final void appendToWal(E event) {
+    /// @see #appendToWal(Iterable, Durability)
+    protected synchronized final void appendToWal(E event, Durability durability) {
         var walEvent = AggregateWalEvent.of(this, event);
-        wal.append(walEvent);
+        wal.append(walEvent, durability);
         applyEvent(event);
     }
 

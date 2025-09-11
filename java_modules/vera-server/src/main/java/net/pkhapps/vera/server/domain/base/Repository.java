@@ -17,6 +17,7 @@
 package net.pkhapps.vera.server.domain.base;
 
 import net.pkhapps.vera.server.util.Registration;
+import net.pkhapps.vera.server.util.wal.Durability;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
 
 import java.util.Collection;
@@ -118,7 +119,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         }
 
         var event = new RepositoryWalEvent.AggregateInserted<>(aggregateType, aggregate);
-        wal().append(event);
+        wal().append(event, Durability.IMMEDIATE);
         doInsert(aggregate);
     }
 
@@ -161,7 +162,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
             return;
         }
         var event = new RepositoryWalEvent.AggregateRemoved<>(aggregateType, id);
-        wal().append(event);
+        wal().append(event, Durability.IMMEDIATE);
         doRemove(id);
     }
 

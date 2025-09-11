@@ -19,6 +19,7 @@ package net.pkhapps.vera.server.domain.model.station;
 import net.pkhapps.vera.server.domain.base.Aggregate;
 import net.pkhapps.vera.server.domain.model.geo.Wgs84Point;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
+import net.pkhapps.vera.server.util.wal.Durability;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
 import org.jspecify.annotations.Nullable;
 
@@ -49,7 +50,7 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
     }
 
     public void setName(MultiLingualString name) {
-        appendToWal(new StationWalEvent.SetName(name));
+        appendToWal(new StationWalEvent.SetName(name), Durability.IMMEDIATE);
     }
 
     public Wgs84Point location() {
@@ -57,7 +58,7 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
     }
 
     public void setLocation(Wgs84Point location) {
-        appendToWal(new StationWalEvent.SetLocation(location));
+        appendToWal(new StationWalEvent.SetLocation(location), Durability.IMMEDIATE);
     }
 
     public @Nullable String note() {
@@ -65,7 +66,7 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
     }
 
     public void setNote(@Nullable String note) {
-        appendToWal(new StationWalEvent.SetNote(note));
+        appendToWal(new StationWalEvent.SetNote(note), Durability.IMMEDIATE);
     }
 
     @Override

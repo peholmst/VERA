@@ -32,10 +32,11 @@ public interface WriteAheadLog {
 
     /// Appends the given event to the WAL.
     ///
-    /// @param event the event to append
-    /// @param <E>   the type of event to append
+    /// @param event      the event to append
+    /// @param durability the durability mode of the write operation
+    /// @param <E>        the type of event to append
     /// @throws WriteAheadLogException if the event could not be written
-    <E extends WalEvent> void append(E event);
+    <E extends WalEvent> void append(E event, Durability durability);
 
     /// Registers the given consumer to be called when the WAL is replayed.
     ///
