@@ -54,7 +54,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.putLong(l);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -63,7 +63,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.putInt(i);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -72,7 +72,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.putShort(s);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -81,7 +81,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.putDouble(d);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -90,7 +90,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.put(b ? (byte) 1 : (byte) 0);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -101,7 +101,7 @@ public final class BufferOutput implements Output {
             byteBuffer.putInt(b.length);
             byteBuffer.put(b);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -115,7 +115,7 @@ public final class BufferOutput implements Output {
                 writeString(s);
             }
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -124,7 +124,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.put(b);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 
@@ -133,7 +133,7 @@ public final class BufferOutput implements Output {
         try {
             byteBuffer.put(bytes);
         } catch (BufferOverflowException ex) {
-            throw new OutputOverflowException(ex.getMessage(), ex);
+            throw new OutputOverflowException(ex.getMessage());
         }
     }
 

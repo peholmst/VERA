@@ -19,10 +19,6 @@ package net.pkhapps.vera.server.util.serde;
 /// Exception thrown by an [Input] when attempting to read past the limit of the underlying source.
 public class InputUnderflowException extends SerdeException {
 
-    public InputUnderflowException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public InputUnderflowException(String message) {
         super(message);
     }

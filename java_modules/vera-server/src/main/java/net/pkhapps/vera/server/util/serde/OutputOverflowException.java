@@ -22,8 +22,4 @@ public class OutputOverflowException extends SerdeException {
     public OutputOverflowException(String message) {
         super(message);
     }
-
-    public OutputOverflowException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

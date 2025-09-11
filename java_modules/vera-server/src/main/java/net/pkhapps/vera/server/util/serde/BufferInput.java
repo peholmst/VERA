@@ -71,7 +71,7 @@ public final class BufferInput implements Input {
         try {
             return byteBuffer.getLong();
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -80,7 +80,7 @@ public final class BufferInput implements Input {
         try {
             return byteBuffer.getInt();
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -89,7 +89,7 @@ public final class BufferInput implements Input {
         try {
             return byteBuffer.getShort();
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -98,7 +98,7 @@ public final class BufferInput implements Input {
         try {
             return byteBuffer.getDouble();
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -107,7 +107,7 @@ public final class BufferInput implements Input {
         try {
             return byteBuffer.get() == 1;
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -119,7 +119,7 @@ public final class BufferInput implements Input {
             byteBuffer.get(bytes);
             return new String(bytes, StandardCharsets.UTF_8);
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -133,7 +133,7 @@ public final class BufferInput implements Input {
                 return readString();
             }
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -142,7 +142,7 @@ public final class BufferInput implements Input {
         try {
             return byteBuffer.get();
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 
@@ -151,7 +151,7 @@ public final class BufferInput implements Input {
         try {
             byteBuffer.get(dst);
         } catch (BufferUnderflowException ex) {
-            throw new InputUnderflowException(ex.getMessage(), ex);
+            throw new InputUnderflowException(ex.getMessage());
         }
     }
 }
