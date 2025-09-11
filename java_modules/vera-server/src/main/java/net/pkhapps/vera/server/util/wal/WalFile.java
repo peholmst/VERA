@@ -26,6 +26,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.zip.CRC32C;
 
@@ -226,8 +229,9 @@ sealed abstract class WalFile implements AutoCloseable {
         private final FileChannel fileChannel;
         private long nextRecordNumber;
         private final ScratchBuffer scratch = new ScratchBuffer();
+        private final WalFlusher walFlusher;
 
-        private WritableWalFile(Path file, long defaultNextRecordNumber) {
+        private WritableWalFile(Path file, long defaultNextRecordNumber, Consumer<IOException> walFlusherExceptionHandler) {
             super(file);
             log.info("Opening file {} for writing", file);
 
@@ -246,6 +250,7 @@ sealed abstract class WalFile implements AutoCloseable {
 
             try {
                 fileChannel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                walFlusher = new WalFlusher(fileChannel, walFlusherExceptionHandler);
             } catch (IOException ex) {
                 log.error("Error opening file {}", file, ex);
                 throw new WalIOException("Error opening file", ex);
@@ -294,10 +299,11 @@ sealed abstract class WalFile implements AutoCloseable {
 
         /// Writes the given payload to the WAL in a new record.
         ///
-        /// @param payload the payload itself
+        /// @param payload    the payload itself
+        /// @param durability the durability of the write operation
         /// @return the number of the written record
-        public long write(byte[] payload) {
-            return write(payload, 0, payload.length);
+        public long write(byte[] payload, Durability durability) {
+            return write(payload, 0, payload.length, durability);
         }
 
         /// Writes the given payload to the WAL in a new record.
@@ -305,9 +311,10 @@ sealed abstract class WalFile implements AutoCloseable {
         /// @param payload       an array containing the payload
         /// @param payloadOffset the offset of the payload inside the array
         /// @param payloadLength the length of the payload
+        /// @param durability    the durability of the write operation
         /// @return the number of the written record
-        public long write(byte[] payload, int payloadOffset, int payloadLength) {
-            tryWriteRecord(fileChannel, payload, payloadOffset, payloadLength, nextRecordNumber, scratch);
+        public long write(byte[] payload, int payloadOffset, int payloadLength, Durability durability) {
+            tryWriteRecord(fileChannel, payload, payloadOffset, payloadLength, nextRecordNumber, durability, scratch);
             return nextRecordNumber++;
         }
 
@@ -331,14 +338,18 @@ sealed abstract class WalFile implements AutoCloseable {
             return buffer;
         }
 
-        private static void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength, long recordNumber, ScratchBuffer scratch) {
+        private void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength, long recordNumber, Durability durability, ScratchBuffer scratch) {
             var buffer = writeRecord(payload, payloadOffset, payloadLength, recordNumber, scratch);
             try {
                 while (buffer.hasRemaining()) {
                     //noinspection ResultOfMethodCallIgnored
                     channel.write(buffer);
                 }
-                channel.force(false);
+                if (durability == Durability.IMMEDIATE) {
+                    channel.force(false);
+                } else if (durability == Durability.BATCHED) {
+                    walFlusher.requestFlush();
+                }
             } catch (IOException ex) {
                 log.error("Error writing payload to file", ex);
                 throw new WalIOException("Error writing payload to file", ex);
@@ -354,11 +365,69 @@ sealed abstract class WalFile implements AutoCloseable {
 
         @Override
         public void close() {
+            walFlusher.close();
             try {
                 fileChannel.close();
             } catch (IOException ex) {
                 log.error("Error closing file", ex);
                 throw new WalIOException("Error closing file", ex);
+            }
+
+        }
+    }
+
+    private static final class WalFlusher implements AutoCloseable {
+
+        private final FileChannel channel;
+        private final Consumer<IOException> exceptionHandler;
+        private final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+        private final Thread flusherThread;
+        private volatile boolean running = true;
+
+        WalFlusher(FileChannel channel, Consumer<IOException> exceptionHandler) {
+            this.channel = channel;
+            this.exceptionHandler = exceptionHandler;
+            this.flusherThread = Thread.ofVirtual().start(this::run);
+        }
+
+        @SuppressWarnings("ResultOfMethodCallIgnored")
+        void requestFlush() {
+            queue.offer(new Object());
+        }
+
+        private void run() {
+            log.debug("Starting WalFlusher thread");
+            while (running) {
+                try {
+                    var ignored = queue.poll(5, TimeUnit.MILLISECONDS);
+                    if (ignored != null || !queue.isEmpty()) {
+                        channel.force(false);
+                        queue.clear();
+                    }
+                } catch (IOException ex) {
+                    log.error("WAL flush failed", ex);
+                    exceptionHandler.accept(ex);
+                } catch (InterruptedException ex) {
+                    break;
+                }
+            }
+            log.debug("Performing final WAL flush");
+            try {
+                channel.force(false);
+            } catch (IOException ex) {
+                log.error("Final WAL flush failed", ex);
+                exceptionHandler.accept(ex);
+            }
+        }
+
+        @Override
+        public void close() {
+            log.debug("Stopping WalFlusher thread");
+            running = false;
+            try {
+                flusherThread.join();
+            } catch (InterruptedException ex) {
+                log.error("Interrupted while shutting down WAL flusher", ex);
             }
         }
     }
@@ -369,11 +438,12 @@ sealed abstract class WalFile implements AutoCloseable {
     /// the first record becomes the given `defaultNextRecordNumber`.
     /// If the file exists, the next record number is read from the file itself.
     ///
-    /// @param file                    the WAL file to write to and read from
-    /// @param defaultNextRecordNumber the record number to use for the first record if the file is empty
+    /// @param file                       the WAL file to write to and read from
+    /// @param defaultNextRecordNumber    the record number to use for the first record if the file is empty
+    /// @param walFlusherExceptionHandler an exception handler for I/O errors occurring in the WAL flusher background thread
     /// @throws WriteAheadLogException if the file cannot be opened for writing or created
-    public static WritableWalFile writable(Path file, long defaultNextRecordNumber) {
-        return new WritableWalFile(file, defaultNextRecordNumber);
+    public static WritableWalFile writable(Path file, long defaultNextRecordNumber, Consumer<IOException> walFlusherExceptionHandler) {
+        return new WritableWalFile(file, defaultNextRecordNumber, walFlusherExceptionHandler);
     }
 
     /// Record for consumers replaying a WAL.

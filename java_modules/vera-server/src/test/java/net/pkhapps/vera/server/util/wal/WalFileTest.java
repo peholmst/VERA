@@ -32,11 +32,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WalFileTest {
 
+    private static final Consumer<IOException> DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER = ex -> System.exit(1);
     static Path directory;
 
     @BeforeAll
@@ -56,10 +58,10 @@ class WalFileTest {
     @Disabled
     void small_stress_test() {
         var record_count = 5_000;
-        try (var file = WalFile.writable(directory.resolve("stress"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("stress"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
             var start = System.currentTimeMillis();
             for (var i = 0; i < record_count; ++i) {
-                file.write(("hello world!" + 1).getBytes(StandardCharsets.UTF_8));
+                file.write(("hello world!" + 1).getBytes(StandardCharsets.UTF_8), Durability.BATCHED);
             }
             var end = System.currentTimeMillis();
             System.out.println("Wrote " + record_count + " records in " + (end - start) + "ms");
@@ -68,36 +70,36 @@ class WalFileTest {
 
     @Test
     void next_record_number_set_to_default_when_creating_new_file() {
-        try (var file = WalFile.writable(directory.resolve("empty"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("empty"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
             assertEquals(1L, file.getNextRecordNumber());
         }
     }
 
     @Test
     void writing_records_increment_number() {
-        try (var file = WalFile.writable(directory.resolve("increments"), 1L)) {
-            assertEquals(1L, file.write("hello".getBytes(StandardCharsets.UTF_8)));
-            assertEquals(2L, file.write("world!".getBytes(StandardCharsets.UTF_8)));
+        try (var file = WalFile.writable(directory.resolve("increments"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            assertEquals(1L, file.write("hello".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE));
+            assertEquals(2L, file.write("world!".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE));
             assertEquals(3L, file.getNextRecordNumber());
         }
     }
 
     @Test
     void next_record_number_read_from_existing_file() {
-        try (var file = WalFile.writable(directory.resolve("next_record"), 1L)) {
-            file.write("hello".getBytes(StandardCharsets.UTF_8));
-            file.write("world!".getBytes(StandardCharsets.UTF_8));
+        try (var file = WalFile.writable(directory.resolve("next_record"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            file.write("hello".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
+            file.write("world!".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
         }
-        try (var file = WalFile.writable(directory.resolve("next_record"), 1L)) {
+        try (var file = WalFile.writable(directory.resolve("next_record"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
             assertEquals(3L, file.getNextRecordNumber());
         }
     }
 
     @Test
     void records_can_be_replayed_from_the_beginning() {
-        try (var file = WalFile.writable(directory.resolve("replay"), 1L)) {
-            file.write("hello".getBytes(StandardCharsets.UTF_8));
-            file.write("world!".getBytes(StandardCharsets.UTF_8));
+        try (var file = WalFile.writable(directory.resolve("replay"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            file.write("hello".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
+            file.write("world!".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
 
             var records = replay(file);
             assertEquals(List.of("hello:1", "world!:2"), records);
@@ -106,9 +108,9 @@ class WalFileTest {
 
     @Test
     void records_can_be_replayed_from_readonly_file() {
-        try (var file = WalFile.writable(directory.resolve("replay_readonly"), 1L)) {
-            file.write("hello".getBytes(StandardCharsets.UTF_8));
-            file.write("world!".getBytes(StandardCharsets.UTF_8));
+        try (var file = WalFile.writable(directory.resolve("replay_readonly"), 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            file.write("hello".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
+            file.write("world!".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
         }
 
         try (var file = WalFile.readOnly(directory.resolve("replay_readonly"))) {
@@ -156,8 +158,8 @@ class WalFileTest {
             writeIncompleteRecord(channel, "incomplete header", 3L, WalFile.HEADER_SIZE - 1);
         }
 
-        try (var file = WalFile.writable(path, 1L)) {
-            file.write("complete header".getBytes(StandardCharsets.UTF_8));
+        try (var file = WalFile.writable(path, 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            file.write("complete header".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
             var records = replay(file);
             assertEquals(List.of("hello:1", "world!:2", "complete header:3"), records);
         }
@@ -170,8 +172,8 @@ class WalFileTest {
             writeIncompleteRecord(channel, "incomplete header", 1L, WalFile.HEADER_SIZE - 1);
         }
 
-        try (var file = WalFile.writable(path, 1L)) {
-            file.write("complete header".getBytes(StandardCharsets.UTF_8));
+        try (var file = WalFile.writable(path, 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            file.write("complete header".getBytes(StandardCharsets.UTF_8), Durability.IMMEDIATE);
             var records = replay(file);
             assertEquals(List.of("complete header:1"), records);
         }
