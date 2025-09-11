@@ -72,4 +72,10 @@ final class RepositoryWalEventSerde<T extends Aggregate<ID, S, ?>, ID extends Id
             default -> throw new UnknownInputException("Unknown subTypeId: " + subTypeId);
         }
     }
+
+    @Override
+    public boolean supports(Object object) {
+        return object instanceof RepositoryWalEvent<?, ?, ?> walEvent
+                && walEvent.aggregateType().equals(aggregateType);
+    }
 }

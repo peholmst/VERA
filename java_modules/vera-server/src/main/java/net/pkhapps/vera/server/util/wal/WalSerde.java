@@ -38,6 +38,12 @@ public abstract class WalSerde<T> implements Serde<T> {
         return serdeId;
     }
 
+    /// Returns whether this [Serde] can serialize the specified `object`.
+    ///
+    /// @param object the object to check
+    /// @return true if the object can be serialized by this [Serde], false otherwise
+    public abstract boolean supports(Object object);
+
     /// Writes a header to the given `output` with the given `subTypeId`. This header is used by [WalSerde]s that
     /// serialize and deserialize multiple types (with a common base type).
     ///
@@ -84,5 +90,9 @@ public abstract class WalSerde<T> implements Serde<T> {
         if (subTypeId != 0) {
             throw new UnknownInputException("Unknown subTypeId: " + subTypeId);
         }
+    }
+
+    static int readSerdeId(Input input) {
+        throw new UnknownInputException("not implemented yet");
     }
 }

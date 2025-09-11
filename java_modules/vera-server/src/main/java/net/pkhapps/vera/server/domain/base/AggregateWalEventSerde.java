@@ -62,4 +62,10 @@ final class AggregateWalEventSerde<T extends Aggregate<ID, S, E>, ID extends Ide
         }
         return new AggregateWalEvent<>(aggregateType, id, events);
     }
+
+    @Override
+    public boolean supports(Object object) {
+        return object instanceof AggregateWalEvent<?, ?, ?, ?> walEvent
+                && walEvent.aggregateType().equals(aggregateType);
+    }
 }

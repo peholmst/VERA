@@ -63,4 +63,10 @@ final class RepositoryWalSnapshotSerde<T extends Aggregate<ID, S, ?>, ID extends
         }
         return new RepositoryWalSnapshot<>(aggregateType, aggregateStates);
     }
+
+    @Override
+    public boolean supports(Object object) {
+        return object instanceof RepositoryWalSnapshot<?, ?, ?> walSnapshot
+                && walSnapshot.aggregateType().equals(aggregateType);
+    }
 }
