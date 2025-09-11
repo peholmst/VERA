@@ -23,6 +23,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static net.pkhapps.vera.server.util.serde.SerdeTestUtils.assertSerializationAndDeserializationProducesEqualObject;
@@ -30,7 +31,7 @@ import static net.pkhapps.vera.server.util.serde.SerdeTestUtils.assertSerializat
 class WalSerdeTest {
 
     @Test
-    void serialize_deserialize_with_correct_serde_id() {
+    void serialize_deserialize_with_correct_serde_id_with_sub_types() {
         var serde = new TestEventSerde(512);
         assertSerializationAndDeserializationProducesEqualObject(serde,
                 new TestEvent.MyFirstEvent("Hello World", 123));
@@ -41,7 +42,14 @@ class WalSerdeTest {
     }
 
     @Test
-    void fails_on_incorrect_serde_id() {
+    void serialize_and_deserialize_with_correct_serde_id_without_sub_types() {
+        var serde = new TestSnapshotSerde(128);
+        assertSerializationAndDeserializationProducesEqualObject(serde,
+                new TestSnapshot(List.of("hello", "beautiful", "world", "!")));
+    }
+
+    @Test
+    void fails_on_incorrect_serde_id_with_sub_types() {
         var event = new TestEvent.MySecondEvent(Instant.now(), UUID.randomUUID());
         var output = BufferOutput.allocate(1024);
         var firstSerde = new TestEventSerde(512);
@@ -49,6 +57,20 @@ class WalSerdeTest {
 
         var input = BufferInput.wrap(output.buffer().array());
         var secondSerde = new TestEventSerde(256);
+        Assertions.assertThatThrownBy(() -> secondSerde.readFrom(input)).isInstanceOf(UnknownInputException.class);
+    }
+
+    @Test
+    void fails_on_incorrect_subtype_id() {
+        // This will write an entry with a subtype.
+        var event = new TestEvent.MySecondEvent(Instant.now(), UUID.randomUUID());
+        var output = BufferOutput.allocate(1024);
+        var firstSerde = new TestEventSerde(128);
+        firstSerde.writeTo(event, output);
+
+        // This will assume an entry without a subtype
+        var input = BufferInput.wrap(output.buffer().array());
+        var secondSerde = new TestSnapshotSerde(128);
         Assertions.assertThatThrownBy(() -> secondSerde.readFrom(input)).isInstanceOf(UnknownInputException.class);
     }
 }
