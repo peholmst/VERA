@@ -32,8 +32,10 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WalFileTest {
@@ -215,6 +217,24 @@ class WalFileTest {
             records.add("%s:%d".formatted(payload, record.recordNumber()));
         });
         return records;
+    }
+
+    @Test
+    void can_write_only_a_part_of_the_payload_array() {
+        var path = directory.resolve("can_write_only_a_part_of_the_payload_array");
+        try (var file = WalFile.writable(path, 1L, DEFAULT_WAL_FLUSHER_EXCEPTION_HANDLER)) {
+            var writePayload = "Hello World Ignore The Rest".getBytes(StandardCharsets.UTF_8);
+            file.write(writePayload, 0, 11, Durability.NONE);
+            file.write("Hello World".getBytes(StandardCharsets.UTF_8), Durability.NONE);
+
+            var count = new AtomicInteger(0);
+            file.replayAll(record -> {
+                var readPayload = new String(record.payload(), 0, record.payloadLength(), StandardCharsets.UTF_8);
+                assertThat(readPayload).isEqualTo("Hello World");
+                count.getAndIncrement();
+            });
+            assertThat(count.get()).isEqualTo(2);
+        }
     }
 
     // TODO Test reading corrupt files (i.e. bad checksum or bad magic)

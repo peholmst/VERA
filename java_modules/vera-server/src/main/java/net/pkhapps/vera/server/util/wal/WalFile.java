@@ -107,7 +107,7 @@ sealed abstract class WalFile implements AutoCloseable {
     /// @throws WriteAheadLogException if there is an error replaying the WAL
     public void replayAll(Consumer<WalRecord> consumer) {
         final long startTimeMillis = System.currentTimeMillis();
-        log.info("Replaying all records");
+        log.info("Replaying all records in {}", file);
         int recordsReplayed = 0;
         try (var readChannel = FileChannel.open(file, StandardOpenOption.READ)) {
             var scratch = new ScratchBuffer();
@@ -182,6 +182,7 @@ sealed abstract class WalFile implements AutoCloseable {
             if (actualChecksum != checksum) {
                 log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
                         recordNumber, position, checksum, actualChecksum);
+                log.debug("Payload length: {}  Scratch buffer length: {}", payloadLength, payload.length);
                 throw new WalCorruptionException("Checksum mismatch");
             }
 
@@ -231,10 +232,9 @@ sealed abstract class WalFile implements AutoCloseable {
         private final ScratchBuffer scratch = new ScratchBuffer();
         private final WalFlusher walFlusher;
 
-        private WritableWalFile(Path file, long defaultNextRecordNumber, Consumer<IOException> walFlusherExceptionHandler) {
+        private WritableWalFile(Path file, long defaultNextRecordNumber, Consumer<? super IOException> walFlusherExceptionHandler) {
             super(file);
             log.info("Opening file {} for writing", file);
-
             try {
                 var lastRecordNumber = readLastRecordNumber(file);
                 if (lastRecordNumber < 0) {
@@ -260,6 +260,10 @@ sealed abstract class WalFile implements AutoCloseable {
         private static long readLastRecordNumber(Path file) throws IOException {
             try (var channel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 var size = channel.size();
+                if (size == 0) {
+                    log.info("File {} is empty", file);
+                    return -1;
+                }
                 var pos = size - Integer.BYTES;
                 var magicBuf = ByteBuffer.allocate(Integer.BYTES);
                 var scratch = new ScratchBuffer();
@@ -292,7 +296,7 @@ sealed abstract class WalFile implements AutoCloseable {
                 channel.truncate(0);
                 channel.force(false);
             } catch (NoSuchFileException ex) {
-                log.debug("File {} is empty", file);
+                log.debug("File {} does not exist", file);
             }
             return -1;
         }
@@ -332,7 +336,7 @@ sealed abstract class WalFile implements AutoCloseable {
             buffer.putInt(MAGIC);
             buffer.putLong(recordNumber);
             buffer.putLong(checksum);
-            buffer.putInt(payload.length);
+            buffer.putInt(payloadLength);
             buffer.put(payload, payloadOffset, payloadLength);
             buffer.flip();
             return buffer;
@@ -379,12 +383,12 @@ sealed abstract class WalFile implements AutoCloseable {
     private static final class WalFlusher implements AutoCloseable {
 
         private final FileChannel channel;
-        private final Consumer<IOException> exceptionHandler;
+        private final Consumer<? super IOException> exceptionHandler;
         private final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
         private final Thread flusherThread;
         private volatile boolean running = true;
 
-        WalFlusher(FileChannel channel, Consumer<IOException> exceptionHandler) {
+        WalFlusher(FileChannel channel, Consumer<? super IOException> exceptionHandler) {
             this.channel = channel;
             this.exceptionHandler = exceptionHandler;
             this.flusherThread = Thread.ofVirtual().start(this::run);
@@ -442,7 +446,7 @@ sealed abstract class WalFile implements AutoCloseable {
     /// @param defaultNextRecordNumber    the record number to use for the first record if the file is empty
     /// @param walFlusherExceptionHandler an exception handler for I/O errors occurring in the WAL flusher background thread
     /// @throws WriteAheadLogException if the file cannot be opened for writing or created
-    public static WritableWalFile writable(Path file, long defaultNextRecordNumber, Consumer<IOException> walFlusherExceptionHandler) {
+    public static WritableWalFile writable(Path file, long defaultNextRecordNumber, Consumer<? super IOException> walFlusherExceptionHandler) {
         return new WritableWalFile(file, defaultNextRecordNumber, walFlusherExceptionHandler);
     }
 
