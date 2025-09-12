@@ -34,6 +34,8 @@
         <jspecify.version>1.0.0</jspecify.version>
         <jnanoid.version>2.0.0</jnanoid.version>
         <assertj.version>3.27.3</assertj.version>
+        <javalin.version>6.7.0</javalin.version>
+        <json.version>20250517</json.version>
     </properties>
 
     <dependencies>
@@ -62,6 +64,16 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>${javalin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json.version}</version>
         </dependency>
 
         <!-- Test dependencies -->

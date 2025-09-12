@@ -21,4 +21,5 @@ module vera.server {
     requires org.slf4j;
     requires org.jspecify;
     requires jnanoid;
+    requires org.json;
 }
