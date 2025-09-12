@@ -45,9 +45,6 @@ final class FileSystemWalMetadataStore {
     //  start without a snapshot at all.
 
     FileSystemWalMetadataStore(final Path directory) {
-        if (!Files.isDirectory(directory)) {
-            throw new IllegalArgumentException("Path " + directory + " is not a directory");
-        }
         if (!Files.exists(directory)) {
             try {
                 this.directory = Files.createDirectories(directory);
@@ -56,6 +53,9 @@ final class FileSystemWalMetadataStore {
                 throw new WalIOException("Error creating WAL directory", ex);
             }
         } else {
+            if (!Files.isDirectory(directory)) {
+                throw new IllegalArgumentException("Path " + directory + " is not a directory");
+            }
             this.directory = directory;
         }
         metadataFile = directory.resolve("metadata.json");
