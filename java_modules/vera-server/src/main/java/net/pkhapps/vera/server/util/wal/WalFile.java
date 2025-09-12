@@ -169,6 +169,12 @@ sealed abstract class WalFile implements AutoCloseable {
             var checksum = headerBuf.getLong();
             var payloadLength = headerBuf.getInt();
 
+            assert payloadLength > 0;
+
+            if (log.isTraceEnabled()) {
+                log.trace("Reading record: {} Position: {} Checksum: {}, Payload length: {}", recordNumber, position, checksum, payloadLength);
+            }
+
             // Read payload
             byte[] payload = scratch.ensureCapacity(payloadLength);
             var payloadBuf = ByteBuffer.wrap(payload, 0, payloadLength);
@@ -182,7 +188,6 @@ sealed abstract class WalFile implements AutoCloseable {
             if (actualChecksum != checksum) {
                 log.error("Checksum mismatch in record {} at file position {}. Expected checksum {}, actual was {}",
                         recordNumber, position, checksum, actualChecksum);
-                log.debug("Payload length: {}  Scratch buffer length: {}", payloadLength, payload.length);
                 throw new WalCorruptionException("Checksum mismatch");
             }
 
@@ -342,7 +347,12 @@ sealed abstract class WalFile implements AutoCloseable {
             return buffer;
         }
 
-        private void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength, long recordNumber, Durability durability, ScratchBuffer scratch) {
+        private void tryWriteRecord(FileChannel channel, byte[] payload, int payloadOffset, int payloadLength,
+                                    long recordNumber, Durability durability, ScratchBuffer scratch) {
+            assert payloadLength > 0;
+            assert payloadLength <= payload.length;
+            assert payloadOffset < payload.length;
+
             var buffer = writeRecord(payload, payloadOffset, payloadLength, recordNumber, scratch);
             try {
                 while (buffer.hasRemaining()) {
@@ -463,6 +473,11 @@ sealed abstract class WalFile implements AutoCloseable {
     /// @param payloadLength the length of the payload in bytes
     /// @param recordNumber  the record number
     record WalRecord(byte[] payload, int payloadLength, long recordNumber) {
+
+        WalRecord {
+            assert payloadLength > 0;
+            assert payloadLength <= payload.length;
+        }
 
         long sizeOnDisk() {
             return HEADER_SIZE        // Header

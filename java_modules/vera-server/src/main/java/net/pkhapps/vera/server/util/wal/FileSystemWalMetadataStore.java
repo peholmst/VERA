@@ -41,6 +41,9 @@ final class FileSystemWalMetadataStore {
     private final Path metadataFile;
     private Metadata metadata;
 
+    // TODO This current implementation forces the first snapshot to be empty, which is stupid. Make it possible to
+    //  start without a snapshot at all.
+
     FileSystemWalMetadataStore(final Path directory) {
         if (!Files.isDirectory(directory)) {
             throw new IllegalArgumentException("Path " + directory + " is not a directory");
