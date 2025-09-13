@@ -66,8 +66,8 @@ final class AggregateWalEvent<T extends Aggregate<ID, S, E>, ID extends Identifi
 
     @Override
     public String toString() {
-        return "%s[aggregateType=%s, id=%s, eventCount=%d]".formatted(AggregateWalEvent.class.getSimpleName(),
-                aggregateType.getSimpleName(), aggregateId, events.size());
+        return "%s[aggregateType=%s, aggregateId=%s, size=%d]".formatted(getClass().getSimpleName(),
+                aggregateType.getName(), aggregateId, events.size());
     }
 
     /// Performs the given `action` for each aggregate event in this WAL event.

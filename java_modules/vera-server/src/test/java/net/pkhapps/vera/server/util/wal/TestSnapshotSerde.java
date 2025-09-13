@@ -33,6 +33,11 @@ class TestSnapshotSerde extends WalSerde<TestSnapshot> {
     }
 
     @Override
+    public String toString() {
+        return "%s[serdeId=%d]".formatted(getClass().getSimpleName(), serdeId());
+    }
+
+    @Override
     public void writeTo(TestSnapshot object, Output output) {
         writeHeader(output);
         output.writeInteger(object.strings().size());

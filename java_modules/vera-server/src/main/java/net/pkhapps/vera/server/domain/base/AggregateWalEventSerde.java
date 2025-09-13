@@ -44,6 +44,12 @@ final class AggregateWalEventSerde<T extends Aggregate<ID, S, E>, ID extends Ide
     }
 
     @Override
+    public String toString() {
+        return "%s[serdeId=%d, aggregateType=%s]".formatted(getClass().getSimpleName(), serdeId(),
+                aggregateType.getSimpleName());
+    }
+
+    @Override
     public void writeTo(AggregateWalEvent<T, ID, S, E> object, Output output) {
         writeHeader(output);
         idSerde.writeTo(object.aggregateId(), output);

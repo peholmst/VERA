@@ -58,7 +58,7 @@ class WalSerdeManager {
                         log.error("No serde found for type {}", type);
                         return new UnknownTypeException(type);
                     });
-            log.info("Registering serde {} for type {} (serdeId: {})", serde, type.getName(), serde.serdeId());
+            log.info("Implicitly registering serde {} for type {} (serdeId: {})", serde, type.getName(), serde.serdeId());
             classToSerdeMap.putIfAbsent(type, serde);
         }
         return (Serde<T>) serde;

@@ -51,7 +51,7 @@ abstract sealed class RepositoryWalEvent<T extends Aggregate<ID, S, ?>, ID exten
 
         @Override
         public String toString() {
-            return "%s[aggregateType=%s, id=%s]".formatted(getClass().getSimpleName(), aggregateType().getSimpleName(), id);
+            return "%s[aggregateType=%s, aggregateId=%s]".formatted(getClass().getSimpleName(), aggregateType().getName(), id);
         }
 
         /// Returns the ID of the inserted aggregate.
@@ -81,7 +81,7 @@ abstract sealed class RepositoryWalEvent<T extends Aggregate<ID, S, ?>, ID exten
 
         @Override
         public String toString() {
-            return "%s[aggregateType=%s, id=%s]".formatted(getClass().getSimpleName(), aggregateType().getSimpleName(), id);
+            return "%s[aggregateType=%s, aggregateId=%s]".formatted(getClass().getSimpleName(), aggregateType().getName(), id);
         }
 
         /// Returns the ID of the removed aggregate.

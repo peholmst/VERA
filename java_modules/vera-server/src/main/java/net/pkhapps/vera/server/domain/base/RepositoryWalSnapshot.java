@@ -56,7 +56,7 @@ final class RepositoryWalSnapshot<T extends Aggregate<ID, S, ?>, ID extends Iden
 
     @Override
     public String toString() {
-        return "%s[aggregateType=%s, stateCount=%d]".formatted(getClass().getSimpleName(), aggregateType().getSimpleName(), aggregateStates.size());
+        return "%s[aggregateType=%s, size=%d]".formatted(getClass().getSimpleName(), aggregateType().getName(), aggregateStates.size());
     }
 
     /// Performs the given `action` for each aggregate in this snapshot.

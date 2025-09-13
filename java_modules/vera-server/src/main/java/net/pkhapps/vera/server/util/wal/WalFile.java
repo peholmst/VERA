@@ -255,7 +255,7 @@ sealed abstract class WalFile implements AutoCloseable {
 
             try {
                 fileChannel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-                walFlusher = new WalFlusher(fileChannel, walFlusherExceptionHandler);
+                walFlusher = new WalFlusher(file, fileChannel, walFlusherExceptionHandler);
             } catch (IOException ex) {
                 log.error("Error opening file {}", file, ex);
                 throw new WalIOException("Error opening file", ex);
@@ -392,13 +392,15 @@ sealed abstract class WalFile implements AutoCloseable {
 
     private static final class WalFlusher implements AutoCloseable {
 
+        private final Path file;
         private final FileChannel channel;
         private final Consumer<? super IOException> exceptionHandler;
         private final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
         private final Thread flusherThread;
         private volatile boolean running = true;
 
-        WalFlusher(FileChannel channel, Consumer<? super IOException> exceptionHandler) {
+        WalFlusher(Path file, FileChannel channel, Consumer<? super IOException> exceptionHandler) {
+            this.file = file;
             this.channel = channel;
             this.exceptionHandler = exceptionHandler;
             this.flusherThread = Thread.ofVirtual().start(this::run);
@@ -410,7 +412,7 @@ sealed abstract class WalFile implements AutoCloseable {
         }
 
         private void run() {
-            log.debug("Starting WalFlusher thread");
+            log.debug("Starting WalFlusher thread for {}", file);
             while (running) {
                 try {
                     var ignored = queue.poll(5, TimeUnit.MILLISECONDS);
@@ -419,29 +421,29 @@ sealed abstract class WalFile implements AutoCloseable {
                         queue.clear();
                     }
                 } catch (IOException ex) {
-                    log.error("WAL flush failed", ex);
+                    log.error("WAL flush of {} failed", file, ex);
                     exceptionHandler.accept(ex);
                 } catch (InterruptedException ex) {
                     break;
                 }
             }
-            log.debug("Performing final WAL flush");
+            log.debug("Performing final WAL flush of {}", file);
             try {
                 channel.force(false);
             } catch (IOException ex) {
-                log.error("Final WAL flush failed", ex);
+                log.error("Final WAL flush of {} failed", file, ex);
                 exceptionHandler.accept(ex);
             }
         }
 
         @Override
         public void close() {
-            log.debug("Stopping WalFlusher thread");
+            log.debug("Stopping WalFlusher thread for {}", file);
             running = false;
             try {
                 flusherThread.join();
             } catch (InterruptedException ex) {
-                log.error("Interrupted while shutting down WAL flusher", ex);
+                log.error("Interrupted while shutting down WAL flusher for {}", file, ex);
             }
         }
     }

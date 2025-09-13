@@ -35,6 +35,11 @@ class TestEventSerde extends WalSerde<TestEvent> {
     }
 
     @Override
+    public String toString() {
+        return "%s[serdeId=%d]".formatted(getClass().getSimpleName(), serdeId());
+    }
+
+    @Override
     public void writeTo(TestEvent object, Output output) {
         switch (object) {
             case TestEvent.MyFirstEvent myFirstEvent -> {

@@ -39,7 +39,7 @@ public abstract class AbstractWal implements WriteAheadLog, WriteAheadLogControl
     @Override
     public final synchronized <E extends WalEvent> Registration registerEventConsumer(Class<E> eventType, Predicate<? super E> eventFilter, EventConsumer<? super E> eventConsumer) {
         var entry = new EventConsumerEntry<E>(eventType, eventFilter, eventConsumer);
-        log.debug("Registering event consumer {} for event type {} under entry {}", eventConsumer, eventType, entry);
+        log.debug("Registering event consumer {} for event type {} under entry {}", eventConsumer, eventType.getName(), entry);
         eventConsumers.add(entry);
         return () -> {
             synchronized (AbstractWal.this) {
@@ -52,7 +52,7 @@ public abstract class AbstractWal implements WriteAheadLog, WriteAheadLogControl
     @Override
     public final synchronized <S extends WalSnapshot> Registration registerSnapshotConsumer(Class<S> snapshotType, Predicate<? super S> snapshotFilter, SnapshotConsumer<? super S> snapshotConsumer) {
         var entry = new SnapshotConsumerEntry<S>(snapshotType, snapshotFilter, snapshotConsumer);
-        log.debug("Registering snapshot consumer {} for snapshot type {} under entry {}", snapshotConsumer, snapshotType, entry);
+        log.debug("Registering snapshot consumer {} for snapshot type {} under entry {}", snapshotConsumer, snapshotType.getName(), entry);
         snapshotConsumers.add(entry);
         return () -> {
             synchronized (AbstractWal.this) {
