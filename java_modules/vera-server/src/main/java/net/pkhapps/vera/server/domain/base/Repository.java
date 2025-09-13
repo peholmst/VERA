@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /// Base class for repositories of aggregates.
 ///
@@ -96,10 +97,21 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     ///
     /// @param id the ID of the aggregate to get
     /// @return the aggregate, or an empty `Optional` if not found
-    /// @see #find(Predicate)
-    /// @see #findSorted(Predicate, Comparator)
+    /// @see #stream()
+    /// @see #require(Identifier)
     public final Optional<T> get(ID id) {
         return Optional.ofNullable(aggregates.get(id));
+    }
+
+    /// Gets the aggregate with the given ID or throws an exception if it does not exist.
+    ///
+    /// @param id the ID of the aggregate to get
+    /// @return the aggregate
+    /// @throws NonExistentAggregateException if the aggregate does not exist
+    /// @see #get(Identifier)
+    /// @see #stream()
+    public final T require(ID id) {
+        return get(id).orElseThrow(() -> new NonExistentAggregateException(aggregateType, id));
     }
 
     /// Adds the specified aggregate to the repository, storing it in the WAL.
@@ -140,6 +152,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     /// Implementations can use this method to e.g. update additional in-memory indexes.
     ///
     /// @param aggregate the inserted aggregate
+    @SuppressWarnings("unused")
     protected void afterInsert(T aggregate) {
         // NOP
     }
@@ -148,6 +161,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     /// Implementations can use this method to e.g. update additional in-memory indexes.
     ///
     /// @param id the ID of the removed aggregate
+    @SuppressWarnings("unused")
     protected void afterRemove(ID id) {
         //  NOP
     }
@@ -232,6 +246,8 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     ///
     /// @param filter the filter to apply
     /// @return an unmodifiable collection of aggregates
+    /// @deprecated Use [#stream()] directly instead
+    @Deprecated
     public final Collection<T> find(Predicate<T> filter) {
         return aggregates.values().stream().filter(filter).toList();
     }
@@ -241,7 +257,16 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     /// @param filter     the filter to apply
     /// @param comparator the comparator to apply
     /// @return an unmodifiable list of aggregates
+    /// @deprecated Use [#stream()] directly instead
+    @Deprecated
     public final List<T> findSorted(Predicate<T> filter, Comparator<T> comparator) {
         return aggregates.values().stream().filter(filter).sorted(comparator).toList();
+    }
+
+    /// Returns a stream of all aggregates currently in the repository.
+    ///
+    /// @return a stream of aggregates
+    public final Stream<T> stream() {
+        return aggregates.values().stream();
     }
 }
