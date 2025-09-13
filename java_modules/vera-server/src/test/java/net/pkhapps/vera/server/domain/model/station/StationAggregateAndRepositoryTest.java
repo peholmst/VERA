@@ -53,7 +53,7 @@ class StationAggregateAndRepositoryTest {
         StationId id3;
         try (var repo = new StationRepository(wal)) {
             var station1 = repo.create(MultiLingualString.of(Locales.FINNISH, "test1"), POINT0);
-            station1.update(mutator -> mutator
+            station1.update((_, mutator) -> mutator
                     .setName(MultiLingualString.of(Locales.FINNISH, "terve"))
                     .setLocation(POINT1)
                     .setNote("A note")
@@ -61,7 +61,7 @@ class StationAggregateAndRepositoryTest {
             id1 = station1.id();
 
             var station2 = repo.create(MultiLingualString.of(Locales.SWEDISH, "test2"), POINT0);
-            station2.update(mutator -> mutator
+            station2.update((_, mutator) -> mutator
                     .setName(MultiLingualString.of(Locales.SWEDISH, "hej"))
                     .setLocation(POINT2)
                     .setNote("Another note")
@@ -98,11 +98,11 @@ class StationAggregateAndRepositoryTest {
         StationId id3;
         try (var repo = new StationRepository(wal)) {
             var station1 = repo.create(MultiLingualString.of(Locale.ENGLISH, "test1"), POINT1);
-            station1.update(mutator -> mutator.setNote("A note"));
+            station1.update((_, mutator) -> mutator.setNote("A note"));
             id1 = station1.id();
 
             var station2 = repo.create(MultiLingualString.of(Locale.FRENCH, "test2"), POINT2);
-            station2.update(mutator -> mutator.setNote("Another note"));
+            station2.update((_, mutator) -> mutator.setNote("Another note"));
             id2 = station2.id();
 
             var station3 = repo.create(MultiLingualString.of(Locale.GERMAN, "this will be deleted"), POINT3);

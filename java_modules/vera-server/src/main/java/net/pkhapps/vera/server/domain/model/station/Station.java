@@ -23,7 +23,7 @@ import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
 import net.pkhapps.vera.server.util.wal.Durability;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /// Aggregate representing a station.
 ///
@@ -82,9 +82,9 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
         Mutator setNote(String note);
     }
 
-    public void update(Consumer<Mutator> action) {
+    public void update(BiConsumer<Station, Mutator> action) {
         var deltaBuilder = new AggregateDeltaBuilder<StationWalEvent>();
-        action.accept(new Mutator() {
+        action.accept(this, new Mutator() {
             @Override
             public Mutator setName(MultiLingualString name) {
                 deltaBuilder.update(name, Station.this.name, StationWalEvent.SetName::new);
