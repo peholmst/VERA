@@ -53,15 +53,19 @@ class StationAggregateAndRepositoryTest {
         StationId id3;
         try (var repo = new StationRepository(wal)) {
             var station1 = repo.create(MultiLingualString.of(Locales.FINNISH, "test1"), POINT0);
-            station1.setName(MultiLingualString.of(Locales.FINNISH, "terve"));
-            station1.setLocation(POINT1);
-            station1.setNote("A note");
+            station1.update(mutator -> mutator
+                    .setName(MultiLingualString.of(Locales.FINNISH, "terve"))
+                    .setLocation(POINT1)
+                    .setNote("A note")
+            );
             id1 = station1.id();
 
             var station2 = repo.create(MultiLingualString.of(Locales.SWEDISH, "test2"), POINT0);
-            station2.setName(MultiLingualString.of(Locales.SWEDISH, "hej"));
-            station2.setLocation(POINT2);
-            station2.setNote("Another note");
+            station2.update(mutator -> mutator
+                    .setName(MultiLingualString.of(Locales.SWEDISH, "hej"))
+                    .setLocation(POINT2)
+                    .setNote("Another note")
+            );
             id2 = station2.id();
 
             var station3 = repo.create(MultiLingualString.of(Locale.GERMAN, "this will be deleted"), POINT3);
@@ -94,11 +98,11 @@ class StationAggregateAndRepositoryTest {
         StationId id3;
         try (var repo = new StationRepository(wal)) {
             var station1 = repo.create(MultiLingualString.of(Locale.ENGLISH, "test1"), POINT1);
-            station1.setNote("A note");
+            station1.update(mutator -> mutator.setNote("A note"));
             id1 = station1.id();
 
             var station2 = repo.create(MultiLingualString.of(Locale.FRENCH, "test2"), POINT2);
-            station2.setNote("Another note");
+            station2.update(mutator -> mutator.setNote("Another note"));
             id2 = station2.id();
 
             var station3 = repo.create(MultiLingualString.of(Locale.GERMAN, "this will be deleted"), POINT3);

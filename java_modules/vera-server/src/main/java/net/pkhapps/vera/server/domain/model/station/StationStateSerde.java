@@ -39,7 +39,7 @@ final class StationStateSerde implements Serde<Station.StationState> {
     public void writeTo(Station.StationState object, Output output) {
         MultiLingualStringSerde.instance().writeTo(object.name(), output);
         Wgs84PointSerde.instance().writeTo(object.location(), output);
-        output.writeNullableString(object.note());
+        output.writeString(object.note());
     }
 
     @Override
@@ -47,7 +47,7 @@ final class StationStateSerde implements Serde<Station.StationState> {
         return new Station.StationState(
                 MultiLingualStringSerde.instance().readFrom(input),
                 Wgs84PointSerde.instance().readFrom(input),
-                input.readNullableString()
+                input.readString()
         );
     }
 }

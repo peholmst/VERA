@@ -17,11 +17,13 @@
 package net.pkhapps.vera.server.domain.model.station;
 
 import net.pkhapps.vera.server.domain.base.Aggregate;
+import net.pkhapps.vera.server.domain.base.AggregateDeltaBuilder;
 import net.pkhapps.vera.server.domain.model.geo.Wgs84Point;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
 import net.pkhapps.vera.server.util.wal.Durability;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
-import org.jspecify.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /// Aggregate representing a station.
 ///
@@ -30,12 +32,13 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
 
     private volatile MultiLingualString name;
     private volatile Wgs84Point location;
-    private volatile @Nullable String note;
+    private volatile String note;
 
     Station(WriteAheadLog wal, StationId stationId, MultiLingualString name, Wgs84Point location) {
         super(wal, stationId);
         this.name = name;
         this.location = location;
+        this.note = "";
     }
 
     Station(WriteAheadLog wal, StationId stationId, StationState state) {
@@ -49,24 +52,12 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
         return name;
     }
 
-    public void setName(MultiLingualString name) {
-        appendToWal(new StationWalEvent.SetName(name), Durability.IMMEDIATE);
-    }
-
     public Wgs84Point location() {
         return location;
     }
 
-    public void setLocation(Wgs84Point location) {
-        appendToWal(new StationWalEvent.SetLocation(location), Durability.IMMEDIATE);
-    }
-
-    public @Nullable String note() {
+    public String note() {
         return note;
-    }
-
-    public void setNote(@Nullable String note) {
-        appendToWal(new StationWalEvent.SetNote(note), Durability.IMMEDIATE);
     }
 
     @Override
@@ -83,6 +74,40 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
         }
     }
 
+    public interface Mutator {
+        Mutator setName(MultiLingualString name);
+
+        Mutator setLocation(Wgs84Point location);
+
+        Mutator setNote(String note);
+    }
+
+    public void update(Consumer<Mutator> action) {
+        var deltaBuilder = new AggregateDeltaBuilder<StationWalEvent>();
+        action.accept(new Mutator() {
+            @Override
+            public Mutator setName(MultiLingualString name) {
+                deltaBuilder.update(name, Station.this.name, StationWalEvent.SetName::new);
+                return this;
+            }
+
+            @Override
+            public Mutator setLocation(Wgs84Point location) {
+                deltaBuilder.update(location, Station.this.location, StationWalEvent.SetLocation::new);
+                return this;
+            }
+
+            @Override
+            public Mutator setNote(String note) {
+                deltaBuilder.update(note, Station.this.note, StationWalEvent.SetNote::new);
+                return this;
+            }
+        });
+        if (deltaBuilder.containsEvents()) {
+            appendToWal(deltaBuilder.build(), Durability.IMMEDIATE);
+        }
+    }
+
     /// Super interface for WAL events written by the station aggregate.
     protected sealed interface StationWalEvent {
 
@@ -92,7 +117,7 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
         record SetLocation(Wgs84Point location) implements StationWalEvent {
         }
 
-        record SetNote(@Nullable String note) implements StationWalEvent {
+        record SetNote(String note) implements StationWalEvent {
         }
     }
 
@@ -100,7 +125,7 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
     protected record StationState(
             MultiLingualString name,
             Wgs84Point location,
-            @Nullable String note
+            String note
     ) {
     }
 }

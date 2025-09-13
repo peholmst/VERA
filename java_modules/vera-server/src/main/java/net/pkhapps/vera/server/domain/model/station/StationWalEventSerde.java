@@ -52,7 +52,7 @@ final class StationWalEventSerde implements Serde<Station.StationWalEvent> {
             }
             case Station.StationWalEvent.SetNote setNote -> {
                 output.writeShort(TYPE_ID_SET_NOTE);
-                output.writeNullableString(setNote.note());
+                output.writeString(setNote.note());
             }
         }
     }
@@ -68,7 +68,7 @@ final class StationWalEventSerde implements Serde<Station.StationWalEvent> {
                 return new Station.StationWalEvent.SetLocation(Wgs84PointSerde.instance().readFrom(input));
             }
             case TYPE_ID_SET_NOTE -> {
-                return new Station.StationWalEvent.SetNote(input.readNullableString());
+                return new Station.StationWalEvent.SetNote(input.readString());
             }
             default -> throw new UnknownInputException("Unknown typeId: " + typeId);
         }
