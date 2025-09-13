@@ -35,6 +35,7 @@
         <jnanoid.version>2.0.0</jnanoid.version>
         <assertj.version>3.27.3</assertj.version>
         <javalin.version>6.7.0</javalin.version>
+        <archunit.version>1.4.1</archunit.version>
         <!-- TODO Only one JSON dependency! -->
         <json.version>20250517</json.version>
         <jackson.version>2.20.0</jackson.version>
@@ -100,6 +101,12 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
