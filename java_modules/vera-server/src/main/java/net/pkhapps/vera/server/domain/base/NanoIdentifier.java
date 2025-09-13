@@ -17,6 +17,7 @@
 package net.pkhapps.vera.server.domain.base;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -58,6 +59,7 @@ public abstract class NanoIdentifier implements Identifier {
     }
 
     @Override
+    @JsonValue
     public String toString() {
         return id;
     }

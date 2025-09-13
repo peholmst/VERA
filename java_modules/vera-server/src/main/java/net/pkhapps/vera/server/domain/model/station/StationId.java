@@ -16,6 +16,7 @@
 
 package net.pkhapps.vera.server.domain.model.station;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import net.pkhapps.vera.server.domain.base.NanoIdentifier;
 
 /// Identifier of a station.
@@ -33,6 +34,7 @@ public final class StationId extends NanoIdentifier {
     /// @param id the Nano ID
     /// @return a new `StationId`
     /// @throws IllegalArgumentException if the given Nano ID is invalid
+    @JsonCreator
     public static StationId of(String id) {
         return new StationId(id);
     }

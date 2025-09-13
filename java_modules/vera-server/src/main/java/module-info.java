@@ -22,4 +22,13 @@ module vera.server {
     requires org.jspecify;
     requires jnanoid;
     requires org.json;
+    requires io.javalin;
+    requires com.fasterxml.jackson.databind;
+
+    // JSON mapping used by the REST APIs
+    exports net.pkhapps.vera.server.domain.base to com.fasterxml.jackson.databind;
+    exports net.pkhapps.vera.server.domain.model.geo to com.fasterxml.jackson.databind;
+    exports net.pkhapps.vera.server.domain.model.station to com.fasterxml.jackson.databind;
+    exports net.pkhapps.vera.server.port.admin to com.fasterxml.jackson.databind;
+
 }
