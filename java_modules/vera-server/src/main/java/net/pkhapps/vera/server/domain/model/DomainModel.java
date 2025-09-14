@@ -35,7 +35,7 @@ public final class DomainModel {
     /// Creates a new `DomainModel` that stores data in the given `wal`.
     ///
     /// @param wal the [WriteAheadLog] to use for data storage
-    /// @return a new [DomainModel]
+    /// @return a new `DomainModel`
     public static DomainModel create(WriteAheadLog wal) {
         return new DomainModel(wal);
     }
