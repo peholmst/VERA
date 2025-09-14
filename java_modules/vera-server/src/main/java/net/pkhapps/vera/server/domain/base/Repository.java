@@ -19,6 +19,8 @@ package net.pkhapps.vera.server.domain.base;
 import net.pkhapps.vera.server.util.Registration;
 import net.pkhapps.vera.server.util.wal.Durability;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -41,6 +43,8 @@ import java.util.stream.Stream;
 /// This factory method should then call the [#insert(Aggregate)] method to add the aggregate to the repository and write
 /// the necessary data to the WAL.
 public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Identifier, S extends Record, E> implements AutoCloseable {
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private final Supplier<Integer> capacity;
     private final WriteAheadLog wal;
@@ -103,6 +107,14 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         return Optional.ofNullable(aggregates.get(id));
     }
 
+    /// Checks if the repository contains an aggregate with the given ID.
+    ///
+    /// @param id the id to check
+    /// @return true if an aggregate with the given ID exists, false otherwise
+    public boolean contains(ID id) {
+        return aggregates.containsKey(id);
+    }
+
     /// Gets the aggregate with the given ID or throws an exception if it does not exist.
     ///
     /// @param id the ID of the aggregate to get
@@ -118,10 +130,11 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     /// Any additional processing, like maintaining indexes, should be done in the [#afterInsert(Aggregate)] method.
     ///
     /// @param aggregate the aggregate to add to the repository
+    /// @return the inserted aggregate
     /// @throws DuplicateIdentifierException  if an aggregate with the same ID already exists in the repository
     /// @throws RepositoryAtCapacityException if the repository is at capacity and cannot accept more aggregates
     /// @see #remove(Identifier)
-    protected synchronized final void insert(T aggregate) {
+    protected synchronized final T insert(T aggregate) {
         if (aggregates.containsKey(aggregate.id())) {
             throw new DuplicateIdentifierException(aggregate.id());
         }
@@ -133,6 +146,7 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
         var event = new RepositoryWalEvent.AggregateInserted<>(aggregateType, aggregate);
         wal().append(event, Durability.IMMEDIATE);
         doInsert(aggregate);
+        return aggregate;
     }
 
     /// Creates a new aggregate with the given ID and state.
@@ -171,13 +185,15 @@ public abstract class Repository<T extends Aggregate<ID, S, E>, ID extends Ident
     /// If the aggregate does not exist, nothing happens.
     ///
     /// @param id the ID of the aggregate to remove
-    public synchronized final void remove(ID id) {
+    /// @return true if an aggregate was removed, false if it did not exist
+    public synchronized boolean remove(ID id) {
         if (!aggregates.containsKey(id)) {
-            return;
+            return false;
         }
         var event = new RepositoryWalEvent.AggregateRemoved<>(aggregateType, id);
         wal().append(event, Durability.IMMEDIATE);
         doRemove(id);
+        return true;
     }
 
     private void applyEvent(RepositoryWalEvent<T, ID, S> event) {

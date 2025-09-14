@@ -16,9 +16,12 @@
 
 package net.pkhapps.vera.server.domain.model.station;
 
+import net.pkhapps.vera.server.domain.base.DuplicateIdentifierException;
 import net.pkhapps.vera.server.domain.base.Repository;
+import net.pkhapps.vera.server.domain.base.RepositoryAtCapacityException;
 import net.pkhapps.vera.server.domain.model.geo.Wgs84Point;
 import net.pkhapps.vera.server.domain.model.i18n.MultiLingualString;
+import net.pkhapps.vera.server.util.UnexpectedException;
 import net.pkhapps.vera.server.util.wal.WriteAheadLog;
 
 /// Repository of [Station] aggregates.
@@ -28,6 +31,7 @@ public final class StationRepository extends Repository<Station, StationId, Stat
     ///
     /// @param wal the WAL to store stations in
     public StationRepository(WriteAheadLog wal) {
+        // TODO add capacity
         super(wal, Station.class);
     }
 
@@ -40,9 +44,20 @@ public final class StationRepository extends Repository<Station, StationId, Stat
     ///
     /// @param name     the name of the station
     /// @param location the location of the station
+    /// @throws RepositoryAtCapacityException if the repository is at capacity and cannot accept more aggregates
     public Station create(MultiLingualString name, Wgs84Point location) {
-        var station = new Station(wal(), StationId.randomStationId(), name, location);
-        insert(station);
-        return station;
+        // TODO Extract this into a helper method somewhere
+        int attemptsLeft = 5;
+        StationId id = null;
+        while (attemptsLeft > 0) {
+            id = StationId.randomStationId();
+            try {
+                return insert(new Station(wal(), id, name, location));
+            } catch (DuplicateIdentifierException ex) {
+                log.debug("Duplicate StationId {}, retrying...", id);
+                attemptsLeft--;
+            }
+        }
+        throw new UnexpectedException("Failed to generate a unique StationId after multiple attempts. Last attempted: " + id);
     }
 }

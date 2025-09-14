@@ -82,7 +82,7 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
         Mutator setNote(String note);
     }
 
-    public void update(BiConsumer<Station, Mutator> action) {
+    public boolean update(BiConsumer<Station, Mutator> action) {
         var deltaBuilder = new AggregateDeltaBuilder<StationWalEvent>();
         action.accept(this, new Mutator() {
             @Override
@@ -105,7 +105,9 @@ public final class Station extends Aggregate<StationId, Station.StationState, St
         });
         if (deltaBuilder.containsEvents()) {
             appendToWal(deltaBuilder.build(), Durability.IMMEDIATE);
+            return true;
         }
+        return false;
     }
 
     /// Super interface for WAL events written by the station aggregate.
