@@ -17,12 +17,11 @@
 package net.pkhapps.vera.server.domain.model.i18n;
 
 import net.pkhapps.vera.server.domain.base.ValueObject;
+import org.jspecify.annotations.Nullable;
 
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 /// Value object representing a string in multiple languages.
 public final class MultiLingualString implements ValueObject {
@@ -76,12 +75,29 @@ public final class MultiLingualString implements ValueObject {
         return values.containsKey(locale);
     }
 
+    /// Checks whether this multilingual string contains any value that matches the given predicate.
+    ///
+    /// @param predicate the predicate to apply to all values
+    /// @return true if at least one value matches provided predicate, false otherwise
+    public boolean containsValue(Predicate<String> predicate) {
+        return values.values().stream().anyMatch(predicate);
+    }
+
     /// Returns the value of the given `locale`.
     ///
     /// @param locale the locale to fetch
     /// @return the value, or an empty `Optional` if not found
     public Optional<String> get(Locale locale) {
         return Optional.ofNullable(values.get(locale));
+    }
+
+    /// Returns the value of the given `locale`, or `defaultValue` if the locale has no value.
+    ///
+    /// @param locale       the locale to fetch
+    /// @param defaultValue the value to return if the locale has no value
+    /// @return the value
+    public String getOrDefault(Locale locale, String defaultValue) {
+        return values.getOrDefault(locale, defaultValue);
     }
 
     /// Returns the number of entries in this multilingual string (minimum 1).
@@ -96,6 +112,39 @@ public final class MultiLingualString implements ValueObject {
     /// @param action the action to perform for each entry
     public void forEach(BiConsumer<Locale, String> action) {
         values.forEach(action);
+    }
+
+    /// Returns a new `MultiLingualString` instance that contains all existing locale/value pairs from this instance,
+    /// plus the specified `locale` and `value`.
+    ///
+    /// If this instance already contains an entry for the specified `locale` with the same `value`, this instance
+    /// is returned unchanged.
+    ///
+    /// @param locale the locale to associate with the given value
+    /// @param value  the value to associate with the given locale
+    /// @return a `MultiLingualString` that includes the specified locale/value pair
+    public MultiLingualString with(Locale locale, String value) {
+        if (Objects.equals(value, values.get(locale))) {
+            return this;
+        } else {
+            var newValues = new HashMap<>(values);
+            newValues.put(locale, value);
+            return new MultiLingualString(newValues);
+        }
+    }
+
+    /// Returns a `MultilingualString` that includes the specified `locale`/`value` pair, ignoring the call if
+    /// `value` is `null`.
+    ///
+    /// If `value` is `null`, this instance is returned unchanged. Otherwise, this method behaves like
+    /// [#with(Locale, String)].
+    ///
+    /// @param locale the locale to associate with the given value
+    /// @param value  the value to associate with the given locale, or `null` to leave this instance unchanged
+    /// @return this instance if `value` is `null`, otherwise a new `MultiLingualString` including the specified
+    /// locale/value pair
+    public MultiLingualString withIgnoringNull(Locale locale, @Nullable String value) {
+        return value == null ? this : with(locale, value);
     }
 
     @Override
