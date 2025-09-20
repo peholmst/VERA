@@ -1,5 +1,5 @@
-import { Wgs84, Wgs84Point } from "./data/Wgs84Point";
-import { html } from "./util";
+import { Wgs84, Wgs84Point } from "../data/Wgs84Point";
+import { html } from "../util";
 
 export type CoordinateFormat = "dd" | "dms" | "ddm";
 
