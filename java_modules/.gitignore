@@ -11,3 +11,7 @@ target/
 
 # IntelliJ
 .idea/
+
+# Data
+vera-gis-tiles/
+vera-server-data/
