@@ -26,14 +26,8 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>vera-server</artifactId>
+    <artifactId>vera-gis-server</artifactId>
     <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <!-- TODO Only one JSON dependency! -->
-        <json.version>20250517</json.version>
-        <jackson.version>2.20.0</jackson.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -46,18 +40,8 @@
             <artifactId>logback-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.aventrix.jnanoid</groupId>
-            <artifactId>jnanoid</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.tngtech.archunit</groupId>
-            <artifactId>archunit-junit5</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.javalin</groupId>
@@ -69,9 +53,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${json.version}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-imaging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-epsg-extension</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-epsg-hsql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-referencing</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
