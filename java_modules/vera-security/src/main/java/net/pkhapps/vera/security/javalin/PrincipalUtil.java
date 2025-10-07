@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.server.adapter;
+package net.pkhapps.vera.security.javalin;
 
 import io.javalin.http.Context;
-import net.pkhapps.vera.server.security.AuthenticationRequiredException;
+import net.pkhapps.vera.security.AuthenticationRequiredException;
 
 import java.security.Principal;
 

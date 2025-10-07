@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.server.security;
+package net.pkhapps.vera.security;
 
 /// Exception thrown when trying to perform a protected operation without authorization.
 ///

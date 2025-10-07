@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.server.security;
+package net.pkhapps.vera.security;
 
 /// Base class for exceptions thrown by the security subsystem.
 public class SecurityException extends RuntimeException {
