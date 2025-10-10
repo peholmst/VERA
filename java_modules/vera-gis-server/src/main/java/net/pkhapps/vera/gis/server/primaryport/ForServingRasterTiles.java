@@ -19,12 +19,10 @@ package net.pkhapps.vera.gis.server.primaryport;
 import net.pkhapps.vera.gis.server.domain.TileMatrixSetId;
 import org.jspecify.annotations.NullMarked;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.security.Principal;
 
 @NullMarked
-public interface ForImportingRasterTiles {
+public interface ForServingRasterTiles {
 
-    void importWorldFile(TileMatrixSetId tileMatrixSet, InputStream worldFile,
-                         InputStream rasterFile) throws IOException;
+    byte[] getTileAsPng(TileMatrixSetId tileMatrixSet, int level, int x, int y, Principal principal);
 }

@@ -141,8 +141,9 @@
     </dependencyManagement>
 
     <modules>
-        <module>vera-server</module>
         <module>vera-gis-server</module>
+        <module>vera-security</module>
+        <module>vera-server</module>
     </modules>
 
     <repositories>

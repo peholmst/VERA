@@ -12,6 +12,7 @@ target/
 # IntelliJ
 .idea/
 
-# Data
+# Data & Config
 vera-gis-tiles/
 vera-server-data/
+vera-gis-server.properties

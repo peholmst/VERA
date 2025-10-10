@@ -18,10 +18,12 @@ package net.pkhapps.vera.security.javalin;
 
 import io.javalin.http.Context;
 import net.pkhapps.vera.security.AuthenticationRequiredException;
+import org.jspecify.annotations.NullMarked;
 
 import java.security.Principal;
 
 /// Utility class for getting and setting a [Principal] in a [Context].
+@NullMarked
 public final class PrincipalUtil {
 
     private static final String ATTRIBUTE_KEY = "principal";
@@ -47,7 +49,6 @@ public final class PrincipalUtil {
     /// @param context   the [Context] to store the principal in
     /// @param principal the principal to store
     public static void setPrincipal(Context context, Principal principal) {
-        assert principal != null;
         context.attribute(ATTRIBUTE_KEY, principal);
     }
 }

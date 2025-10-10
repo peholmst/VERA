@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.application;
+package net.pkhapps.vera.gis.server.service;
 
 import net.pkhapps.vera.gis.server.domain.Tile;
 import net.pkhapps.vera.gis.server.domain.TileMatrix;
@@ -33,23 +33,26 @@ import org.slf4j.LoggerFactory;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.SeekableByteChannel;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 @NullMarked
-public final class RasterTileImporter implements ForImportingRasterTiles {
+public final class RasterTileImportService implements ForImportingRasterTiles {
 
-    private static final Logger log = LoggerFactory.getLogger(RasterTileImporter.class);
+    private static final Logger log = LoggerFactory.getLogger(RasterTileImportService.class);
     private final ForStoringRasterTiles forStoringRasterTiles;
 
-    public RasterTileImporter(ForStoringRasterTiles forStoringRasterTiles) {
+    /**
+     *
+     * @param forStoringRasterTiles
+     */
+    public RasterTileImportService(ForStoringRasterTiles forStoringRasterTiles) {
         this.forStoringRasterTiles = forStoringRasterTiles;
     }
 
     @Override
-    public void importWorldFile(TileMatrixSetId tileMatrixSet, SeekableByteChannel worldFile, SeekableByteChannel rasterFile) throws IOException {
+    public void importWorldFile(TileMatrixSetId tileMatrixSet, InputStream worldFile, InputStream rasterFile) throws IOException {
         var worldFileData = parseWorldFile(worldFile);
         if (worldFileData.xSkew() != 0 || worldFileData.ySkew() != 0) {
             throw new UnsupportedOperationException("Non-zero skew is not supported");
@@ -59,8 +62,11 @@ public final class RasterTileImporter implements ForImportingRasterTiles {
         }
         var rasterFileData = parseRasterFile(rasterFile);
         var worldTopLeft = new Coordinate(worldFileData.x(), worldFileData.y());
-        var worldBottomRight = new Coordinate(worldFileData.x() + rasterFileData.getWidth() * worldFileData.xScale(), worldFileData.y() + rasterFileData.getWidth() * worldFileData.yScale());
+        var worldBottomRight = new Coordinate(worldFileData.x() + rasterFileData.getWidth() * worldFileData.xScale(),
+                worldFileData.y() + rasterFileData.getHeight() * worldFileData.yScale());
         var worldBounds = new Envelope(worldTopLeft, worldBottomRight);
+        log.debug("Image bounds: {}", rasterFileData.getRaster().getBounds());
+        log.debug("World bounds: {}", worldBounds);
 
         var tileMatrix = TileMatrix.findTileMatrixByResolution(tileMatrixSet, worldFileData.xScale());
         var topLeftTile = tileMatrix.findTileByCoordinate(worldTopLeft.getX(), worldTopLeft.getY());
@@ -115,8 +121,8 @@ public final class RasterTileImporter implements ForImportingRasterTiles {
                 tile.y(), Imaging.writeImageToBytes(image, ImageFormats.PNG));
     }
 
-    private WorldFile parseWorldFile(SeekableByteChannel worldFile) throws IOException {
-        try (var reader = new BufferedReader(Channels.newReader(worldFile, StandardCharsets.UTF_8))) {
+    private WorldFile parseWorldFile(InputStream worldFile) throws IOException {
+        try (var reader = new BufferedReader(new InputStreamReader(worldFile, StandardCharsets.UTF_8))) {
             double xScale = Double.parseDouble(reader.readLine());
             double ySkew = Double.parseDouble(reader.readLine());
             double xSkew = Double.parseDouble(reader.readLine());
@@ -129,17 +135,7 @@ public final class RasterTileImporter implements ForImportingRasterTiles {
         }
     }
 
-    private BufferedImage parseRasterFile(SeekableByteChannel rasterFile) throws IOException {
-        var size = rasterFile.size();
-        if (size > Integer.MAX_VALUE) {
-            throw new OutOfMemoryError("Raster file is too big");
-        }
-        var buf = ByteBuffer.allocate((int) size);
-        while (buf.hasRemaining()) {
-            if (rasterFile.read(buf) < 0) {
-                break;
-            }
-        }
-        return Imaging.getBufferedImage(buf.array());
+    private BufferedImage parseRasterFile(InputStream rasterFile) throws IOException {
+        return Imaging.getBufferedImage(rasterFile);
     }
 }

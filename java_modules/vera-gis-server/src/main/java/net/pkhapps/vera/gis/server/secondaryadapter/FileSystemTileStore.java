@@ -35,16 +35,17 @@ public final class FileSystemTileStore implements ForStoringRasterTiles {
 
     public FileSystemTileStore(Path directory) {
         this.directory = directory;
+        log.info("Using directory {}", directory);
     }
 
     @Override
     public Optional<byte[]> readTile(TileMatrixSetId tileMatrixSet, int level, int x, int y) throws IOException {
         var file = resolve(tileMatrixSet, level, x, y, false);
         if (Files.exists(file)) {
-            log.debug("Reading tile {}", file);
+            log.trace("Reading tile {}", file);
             return Optional.of(Files.readAllBytes(file));
         } else {
-            log.debug("Tile {} does not exist", file);
+            log.warn("Tile {} does not exist", file);
             return Optional.empty();
         }
     }
@@ -52,7 +53,7 @@ public final class FileSystemTileStore implements ForStoringRasterTiles {
     @Override
     public synchronized void writeTile(TileMatrixSetId tileMatrixSet, int level, int x, int y, byte[] data) throws IOException {
         var path = resolve(tileMatrixSet, level, x, y, true);
-        log.debug("Writing tile {}", path);
+        log.trace("Writing tile {}", path);
         Files.write(path, data);
     }
 

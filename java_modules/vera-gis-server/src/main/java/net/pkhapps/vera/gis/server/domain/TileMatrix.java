@@ -22,17 +22,16 @@ import org.locationtech.jts.geom.Coordinate;
 @NullMarked
 public final class TileMatrix {
 
-    private static final int TILE_SIZE = 256;
+    public static final int TILE_SIZE = 256;
     private static final double RESOLUTION_TOP_M_PER_PX = 8192;
-    private static final double PROJ_BOUNDS_MIN_X_M = 43_547.79;
-    private static final double PROJ_BOUNDS_MIN_Y_M = 6_522_236.87;
-    private static final double PROJ_BOUNDS_MAX_X_M = 764_796.72;
-    private static final double PROJ_BOUNDS_MAX_Y_M = 7_795_461.19;
     private static final double CENTER_X_M = 419_924.4;
     private static final double CENTER_Y_M = 7_149_882.0;
     private static final double TOP_M = CENTER_Y_M + (RESOLUTION_TOP_M_PER_PX * TILE_SIZE / 2);
+    private static final double BOTTOM_M = CENTER_Y_M - (RESOLUTION_TOP_M_PER_PX * TILE_SIZE / 2);
     private static final double LEFT_M = CENTER_X_M - (RESOLUTION_TOP_M_PER_PX * TILE_SIZE / 2);
+    private static final double RIGHT_M = CENTER_X_M + (RESOLUTION_TOP_M_PER_PX * TILE_SIZE / 2);
     private static final Coordinate TOP_LEFT = new Coordinate(LEFT_M, TOP_M);
+    private static final Coordinate BOTTOM_RIGHT = new Coordinate(RIGHT_M, BOTTOM_M);
 
     private final TileMatrixSetId tileMatrixSet;
     private final int level;
@@ -76,6 +75,10 @@ public final class TileMatrix {
         return TOP_LEFT.copy();
     }
 
+    public Coordinate bottomRight() {
+        return BOTTOM_RIGHT.copy();
+    }
+
     public int tileSizePixels() {
         return TILE_SIZE;
     }
@@ -88,10 +91,6 @@ public final class TileMatrix {
     }
 
     public Tile findTileByCoordinate(double left, double top) {
-        if (left < PROJ_BOUNDS_MIN_X_M || left > PROJ_BOUNDS_MAX_X_M || top < PROJ_BOUNDS_MIN_Y_M || top > PROJ_BOUNDS_MAX_Y_M) {
-            throw new IndexOutOfBoundsException("Coordinates out of bounds");
-        }
-
         var offsetX = left - LEFT_M;
         var offsetY = TOP_M - top;
         var tileSizeMeters = TILE_SIZE * resolution;
@@ -102,8 +101,8 @@ public final class TileMatrix {
 
     @Override
     public String toString() {
-        return "%s[tileMatrixSet=%s, level=%d, size=%dx%d, resolution=%f, topLeft=%s]".formatted(
-                getClass().getSimpleName(), tileMatrixSet, level, matrixSize, matrixSize, resolution, TOP_LEFT);
+        return "%s[tileMatrixSet=%s, level=%d, size=%dx%d, resolution=%f, topLeft=%s, bottomRight=%s]".formatted(
+                getClass().getSimpleName(), tileMatrixSet, level, matrixSize, matrixSize, resolution, TOP_LEFT, BOTTOM_RIGHT);
     }
 
     public static TileMatrix of(TileMatrixSetId tileMatrixSet, int level) {

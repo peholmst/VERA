@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.primaryport;
+package net.pkhapps.vera.gis.server;
 
-import net.pkhapps.vera.gis.server.domain.TileMatrixSetId;
-import org.jspecify.annotations.NullMarked;
+import java.nio.file.Path;
 
-import java.io.IOException;
-import java.io.InputStream;
+public interface ServerConfig {
 
-@NullMarked
-public interface ForImportingRasterTiles {
+    int serverPort();
 
-    void importWorldFile(TileMatrixSetId tileMatrixSet, InputStream worldFile,
-                         InputStream rasterFile) throws IOException;
+    Path tilesDirectory();
 }
