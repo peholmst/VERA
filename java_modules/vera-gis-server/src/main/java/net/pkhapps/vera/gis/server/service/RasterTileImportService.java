@@ -25,11 +25,12 @@ import net.pkhapps.vera.gis.server.secondaryport.ForStoringRasterTiles;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 import org.jspecify.annotations.NullMarked;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,28 +54,49 @@ public final class RasterTileImportService implements ForImportingRasterTiles {
 
     @Override
     public void importWorldFile(TileMatrixSetId tileMatrixSet, InputStream worldFile, InputStream rasterFile) throws IOException {
-        var worldFileData = parseWorldFile(worldFile);
-        if (worldFileData.xSkew() != 0 || worldFileData.ySkew() != 0) {
-            throw new UnsupportedOperationException("Non-zero skew is not supported");
+        var world = parseWorldFile(worldFile);
+        var rasterImage = parseRasterFile(rasterFile);
+        var worldBounds = world.worldBounds(rasterImage.getWidth(), rasterImage.getHeight());
+        importTiles(tileMatrixSet, worldBounds, rasterImage, world.xScale());
+    }
+
+    @Override
+    public void importWorldFile(TileMatrixSetId tileMatrixSet, double scaleToResolution, InputStream worldFile, InputStream rasterFile) throws IOException {
+        var world = parseWorldFile(worldFile);
+        var rasterImage = parseRasterFile(rasterFile);
+
+        if (scaleToResolution == world.xScale()) {
+            var worldBounds = world.worldBounds(rasterImage.getWidth(), rasterImage.getHeight());
+            importTiles(tileMatrixSet, worldBounds, rasterImage, world.xScale());
+        } else {
+            var scale = world.xScale() / scaleToResolution;
+            int w = (int) (rasterImage.getWidth() * scale);
+            int h = (int) (rasterImage.getHeight() * scale);
+            log.info("Scaling source image, new width: {}, height: {}", w, h);
+            var scaledImage = new BufferedImage(w, h, rasterImage.getType());
+            var scaledWorld = world.withScale(scaleToResolution, -scaleToResolution);
+
+            var scalingTransform = new AffineTransform();
+            scalingTransform.scale(scale, scale);
+            var scaleOp = new AffineTransformOp(scalingTransform, AffineTransformOp.TYPE_BILINEAR);
+            scaledImage = scaleOp.filter(rasterImage, scaledImage);
+
+            var worldBounds = scaledWorld.worldBounds(scaledImage.getWidth(), scaledImage.getHeight());
+            importTiles(tileMatrixSet, worldBounds, scaledImage, scaleToResolution);
         }
-        if (worldFileData.xScale() != -worldFileData.yScale()) {
-            throw new UnsupportedOperationException("Different x and y scales are not supported");
-        }
-        var rasterFileData = parseRasterFile(rasterFile);
-        var worldTopLeft = new Coordinate(worldFileData.x(), worldFileData.y());
-        var worldBottomRight = new Coordinate(worldFileData.x() + rasterFileData.getWidth() * worldFileData.xScale(),
-                worldFileData.y() + rasterFileData.getHeight() * worldFileData.yScale());
-        var worldBounds = new Envelope(worldTopLeft, worldBottomRight);
-        log.debug("Image bounds: {}", rasterFileData.getRaster().getBounds());
+    }
+
+    private void importTiles(TileMatrixSetId tileMatrixSet, Envelope worldBounds, BufferedImage rasterImage, double resolution) throws IOException {
+        log.debug("Image bounds: {}", rasterImage.getRaster().getBounds());
         log.debug("World bounds: {}", worldBounds);
 
-        var tileMatrix = TileMatrix.findTileMatrixByResolution(tileMatrixSet, worldFileData.xScale());
-        var topLeftTile = tileMatrix.findTileByCoordinate(worldTopLeft.getX(), worldTopLeft.getY());
-        var bottomRightTile = tileMatrix.findTileByCoordinate(worldBottomRight.getX(), worldBottomRight.getY());
+        var tileMatrix = TileMatrix.findTileMatrixByResolution(tileMatrixSet, resolution);
+        var topLeftTile = tileMatrix.findTileByCoordinate(worldBounds.getMinX(), worldBounds.getMaxY());
+        var bottomRightTile = tileMatrix.findTileByCoordinate(worldBounds.getMaxX(), worldBounds.getMinY());
 
         for (int y = topLeftTile.y(); y <= bottomRightTile.y(); y++) {
             for (int x = topLeftTile.x(); x <= bottomRightTile.x(); x++) {
-                extractTile(tileMatrix.tile(x, y), worldBounds, rasterFileData);
+                extractTile(tileMatrix.tile(x, y), worldBounds, rasterImage);
             }
         }
     }
@@ -129,6 +151,14 @@ public final class RasterTileImportService implements ForImportingRasterTiles {
             double yScale = Double.parseDouble(reader.readLine());
             double x = Double.parseDouble(reader.readLine());
             double y = Double.parseDouble(reader.readLine());
+
+            if (xSkew != 0 || ySkew != 0) {
+                throw new UnsupportedOperationException("Non-zero skew is not supported");
+            }
+            if (xScale != -yScale) {
+                throw new UnsupportedOperationException("Different x and y scales are not supported");
+            }
+
             return new WorldFile(xScale, ySkew, xSkew, yScale, x, y);
         } catch (NullPointerException | NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid world file", ex);

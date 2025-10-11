@@ -17,8 +17,19 @@
 package net.pkhapps.vera.gis.server.domain;
 
 import org.jspecify.annotations.NullMarked;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 
 @NullMarked
 public record WorldFile(double xScale, double ySkew, double xSkew, double yScale, double x, double y) {
 
+    public Envelope worldBounds(int imageWidth, int imageHeight) {
+        var worldTopLeft = new Coordinate(x, y);
+        var worldBottomRight = new Coordinate(x + imageWidth * xScale, y + imageHeight * yScale);
+        return new Envelope(worldTopLeft, worldBottomRight);
+    }
+
+    public WorldFile withScale(double xScale, double yScale) {
+        return new WorldFile(xScale, ySkew, xSkew, yScale, x, y);
+    }
 }

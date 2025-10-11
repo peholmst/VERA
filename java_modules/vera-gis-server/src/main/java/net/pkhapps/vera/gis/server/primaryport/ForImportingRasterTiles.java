@@ -27,4 +27,7 @@ public interface ForImportingRasterTiles {
 
     void importWorldFile(TileMatrixSetId tileMatrixSet, InputStream worldFile,
                          InputStream rasterFile) throws IOException;
+
+    void importWorldFile(TileMatrixSetId tileMatrixSet, double scaleToResolution, InputStream worldFile,
+                         InputStream rasterFile) throws IOException;
 }

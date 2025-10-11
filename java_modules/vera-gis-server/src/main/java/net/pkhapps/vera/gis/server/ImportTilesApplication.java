@@ -28,8 +28,8 @@ import java.nio.file.StandardOpenOption;
 public class ImportTilesApplication {
 
     static void main(String[] args) throws IOException {
-        if (args.length != 3) {
-            IO.println("Usage: ImportTiles <tileMatrixSet> <source-dir> <destination-dir>");
+        if (args.length < 3) {
+            IO.println("Usage: ImportTiles <tileMatrixSet> <source-dir> <destination-dir> (destination-scale)");
             System.exit(1);
         }
         var tileMatrixSet = TileMatrixSetId.of(args[0]);
@@ -44,8 +44,13 @@ public class ImportTilesApplication {
             System.exit(1);
         }
 
+        var destinationScale = args.length > 3 ? Double.parseDouble(args[3]) : Double.NaN;
+
         IO.println("Importing tiles from: " + source.toAbsolutePath());
         IO.println("Storing tiles in: " + destination.toAbsolutePath());
+        if (!Double.isNaN(destinationScale)) {
+            IO.println("Destination scale: " + destinationScale);
+        }
 
         var tileStore = new FileSystemTileStore(destination);
         var importer = new RasterTileImportService(tileStore);
@@ -55,7 +60,11 @@ public class ImportTilesApplication {
                 var worldFile = image.getParent().resolve(image.getFileName().toString().replace("png", "pgw"));
                 try (var imageStream = Files.newInputStream(image, StandardOpenOption.READ);
                      var worldFileStream = Files.newInputStream(worldFile, StandardOpenOption.READ)) {
-                    importer.importWorldFile(tileMatrixSet, worldFileStream, imageStream);
+                    if (Double.isNaN(destinationScale)) {
+                        importer.importWorldFile(tileMatrixSet, worldFileStream, imageStream);
+                    } else {
+                        importer.importWorldFile(tileMatrixSet, destinationScale, worldFileStream, imageStream);
+                    }
                 } catch (IOException e) {
                     IO.println("Error importing tile: " + image);
                     IO.println(e.getMessage());
