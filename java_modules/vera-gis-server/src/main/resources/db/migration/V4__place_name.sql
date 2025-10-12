@@ -21,11 +21,13 @@ create table place_name
     id         bigint                   not null,
     name_fin   text,
     name_swe   text,
+    gid_source bigint not null,
     geom       geometry(Point, 3067)    not null,
     updated_at timestamp with time zone not null default now(),
     primary key (id)
 );
 
-create index place_name_geom_idx on road_segment using gist (geom);
-create index place_name_fin_idx on road_segment (name_fin);
-create index place_name_swe_idx on road_segment (name_swe);
+create index place_name_geom_idx on place_name using gist (geom);
+create index place_name_fin_idx on place_name (name_fin);
+create index place_name_swe_idx on place_name (name_swe);
+create index place_name_gid_source on place_name (gid_source);

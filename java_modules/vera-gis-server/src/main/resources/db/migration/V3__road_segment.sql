@@ -28,6 +28,7 @@ create table road_segment
     right_to          integer,
     left_range        int4range generated always as (int4range(left_from, left_to, '[]')) stored,
     right_range       int4range generated always as (int4range(right_from, right_to, '[]')) stored,
+    gid_source bigint not null,
     geom              geometry(LineString, 3067) not null,
     updated_at        timestamp with time zone   not null default now(),
     primary key (id),
@@ -40,3 +41,4 @@ create index road_segment_name_fin_idx on road_segment (name_fin);
 create index road_segment_name_swe_idx on road_segment (name_swe);
 create index road_segment_left_range_gist on road_segment using gist (left_range);
 create index road_segment_right_range_gist on road_segment using gist (right_range);
+create index road_segment_gid_source on road_segment (gid_source);

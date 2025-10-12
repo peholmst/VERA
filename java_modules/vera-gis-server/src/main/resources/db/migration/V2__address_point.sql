@@ -23,7 +23,7 @@ create table address_point
     name_fin          text,
     name_swe          text,
     number            text,
-    gid_source        bigint,
+    gid_source bigint not null,
     geom              geometry(Point, 3067)    not null,
     updated_at        timestamp with time zone not null default now(),
     primary key (id),
@@ -34,3 +34,4 @@ create index address_point_geom_idx on address_point using gist (geom);
 create index address_point_municipality_code_idx on address_point (municipality_code);
 create index address_point_name_fin_idx on address_point (name_fin);
 create index address_point_name_swe_idx on address_point (name_swe);
+create index address_point_gid_source on address_point (gid_source);

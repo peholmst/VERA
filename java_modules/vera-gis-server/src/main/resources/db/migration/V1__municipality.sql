@@ -33,12 +33,13 @@ create table municipality_border
 (
     id                bigint                       not null,
     municipality_code varchar(3)                   not null,
-    gid_source        bigint,
+    gid_source bigint not null,
     geom              geometry(MultiPolygon, 3067) not null,
     updated_at        timestamp with time zone     not null default now(),
     primary key (id),
     foreign key (municipality_code) references municipality_name (municipality_code)
 );
 
-create index municipality_name_code_idx on municipality_border (municipality_code);
-create index municipality_geom_idx on municipality_border using gist (geom);
+create index municipality_border_code_idx on municipality_border (municipality_code);
+create index municipality_border_geom_idx on municipality_border using gist (geom);
+create index municipality_border_gid_source on municipality_border (gid_source);
