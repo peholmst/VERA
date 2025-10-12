@@ -44,14 +44,19 @@
         <archunit.version>1.4.1</archunit.version>
         <assertj.version>3.27.3</assertj.version>
         <commons-imaging.version>1.0.0-alpha6</commons-imaging.version>
+        <flyway.version>11.14.0</flyway.version>
         <geotools.version>34-M0</geotools.version>
         <jackson.version>2.20.0</jackson.version>
         <javalin.version>6.7.0</javalin.version>
         <jnanoid.version>2.0.0</jnanoid.version>
+        <jooq.version>3.20.8</jooq.version>
         <jspecify.version>1.0.0</jspecify.version>
         <junit-jupiter.version>5.12.2</junit-jupiter.version>
         <logback.version>1.5.18</logback.version>
+        <postgresql.version>42.7.8</postgresql.version>
         <slf4j.version>2.0.17</slf4j.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
+        <testcontainers-jooq-codegen-maven-plugin.version>0.0.4</testcontainers-jooq-codegen-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -133,12 +138,51 @@
                 <version>${commons-imaging.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jooq</groupId>
+                <artifactId>jooq</artifactId>
+                <version>${jooq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.flywaydb</groupId>
+                    <artifactId>flyway-maven-plugin</artifactId>
+                    <version>${flyway.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.testcontainers</groupId>
+                    <artifactId>testcontainers-jooq-codegen-maven-plugin</artifactId>
+                    <version>${testcontainers-jooq-codegen-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
     <modules>
         <module>vera-gis-server</module>
