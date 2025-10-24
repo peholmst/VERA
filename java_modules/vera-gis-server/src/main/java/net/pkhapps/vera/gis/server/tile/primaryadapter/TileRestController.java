@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.primaryadapter;
+package net.pkhapps.vera.gis.server.tile.primaryadapter;
 
 import io.javalin.Javalin;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
-import net.pkhapps.vera.gis.server.domain.TileMatrix;
-import net.pkhapps.vera.gis.server.domain.TileMatrixSetId;
-import net.pkhapps.vera.gis.server.primaryport.ForServingRasterTiles;
+import net.pkhapps.vera.gis.server.tile.domain.TileMatrix;
+import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
+import net.pkhapps.vera.gis.server.tile.primaryport.ForServingRasterTiles;
 import net.pkhapps.vera.security.javalin.PrincipalUtil;
 import org.jspecify.annotations.NullMarked;
 

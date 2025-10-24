@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server;
+package net.pkhapps.vera.gis.server.tile;
 
-import net.pkhapps.vera.gis.server.domain.TileMatrixSetId;
-import net.pkhapps.vera.gis.server.secondaryadapter.FileSystemTileStore;
-import net.pkhapps.vera.gis.server.service.RasterTileImportService;
+import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
+import net.pkhapps.vera.gis.server.tile.secondaryadapter.FileSystemTileStore;
 
 import java.io.IOException;
 import java.nio.file.Files;

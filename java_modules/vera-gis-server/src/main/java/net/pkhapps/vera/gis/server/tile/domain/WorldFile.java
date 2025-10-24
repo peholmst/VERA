@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.domain;
+package net.pkhapps.vera.gis.server.tile.domain;
 
 import org.jspecify.annotations.NullMarked;
 import org.locationtech.jts.geom.Coordinate;

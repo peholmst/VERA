@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.service;
+package net.pkhapps.vera.gis.server.tile;
 
-import net.pkhapps.vera.gis.server.domain.TileMatrix;
-import net.pkhapps.vera.gis.server.domain.TileMatrixSetId;
-import net.pkhapps.vera.gis.server.secondaryport.ForStoringRasterTiles;
+import net.pkhapps.vera.gis.server.tile.domain.TileMatrix;
+import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
+import net.pkhapps.vera.gis.server.tile.secondaryport.ForStoringRasterTiles;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 import org.jspecify.annotations.NullMarked;
