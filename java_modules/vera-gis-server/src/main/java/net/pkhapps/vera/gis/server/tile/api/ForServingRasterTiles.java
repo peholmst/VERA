@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.tile.primaryport;
+package net.pkhapps.vera.gis.server.tile.api;
 
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
 import org.jspecify.annotations.NullMarked;

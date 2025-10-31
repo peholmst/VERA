@@ -17,10 +17,10 @@
 package net.pkhapps.vera.gis.server.tile;
 
 import net.pkhapps.vera.gis.server.security.AppPermission;
+import net.pkhapps.vera.gis.server.tile.api.ForServingRasterTiles;
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrix;
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
-import net.pkhapps.vera.gis.server.tile.primaryport.ForServingRasterTiles;
-import net.pkhapps.vera.gis.server.tile.secondaryport.ForStoringRasterTiles;
+import net.pkhapps.vera.gis.server.tile.spi.ForStoringRasterTiles;
 import net.pkhapps.vera.security.AccessControl;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;

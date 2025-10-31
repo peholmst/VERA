@@ -16,12 +16,12 @@
 
 package net.pkhapps.vera.gis.server.tile;
 
+import net.pkhapps.vera.gis.server.tile.api.ForImportingRasterTiles;
 import net.pkhapps.vera.gis.server.tile.domain.Tile;
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrix;
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
 import net.pkhapps.vera.gis.server.tile.domain.WorldFile;
-import net.pkhapps.vera.gis.server.tile.primaryport.ForImportingRasterTiles;
-import net.pkhapps.vera.gis.server.tile.secondaryport.ForStoringRasterTiles;
+import net.pkhapps.vera.gis.server.tile.spi.ForStoringRasterTiles;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.Imaging;
 import org.jspecify.annotations.NullMarked;

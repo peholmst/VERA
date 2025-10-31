@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.tile.secondaryport;
+package net.pkhapps.vera.gis.server.tile.api;
 
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.io.InputStream;
 
 @NullMarked
-public interface ForStoringRasterTiles {
+public interface ForImportingRasterTiles {
 
-    Optional<byte[]> readTile(TileMatrixSetId tileMatrixSet, int level, int x, int y) throws IOException;
+    void importWorldFile(TileMatrixSetId tileMatrixSet, InputStream worldFile,
+                         InputStream rasterFile) throws IOException;
 
-    void writeTile(TileMatrixSetId tileMatrixSet, int level, int x, int y, byte[] data) throws IOException;
+    void importWorldFile(TileMatrixSetId tileMatrixSet, double scaleToResolution, InputStream worldFile,
+                         InputStream rasterFile) throws IOException;
 }

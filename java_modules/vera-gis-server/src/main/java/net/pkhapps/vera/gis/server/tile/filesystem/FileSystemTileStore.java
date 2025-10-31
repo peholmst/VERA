@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.tile.secondaryadapter;
+package net.pkhapps.vera.gis.server.tile.filesystem;
 
 import net.pkhapps.vera.gis.server.tile.domain.TileMatrixSetId;
-import net.pkhapps.vera.gis.server.tile.secondaryport.ForStoringRasterTiles;
+import net.pkhapps.vera.gis.server.tile.spi.ForStoringRasterTiles;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
