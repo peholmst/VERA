@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.tile;
+package net.pkhapps.vera.gis.server.tile.service;
 
 import net.pkhapps.vera.gis.server.tile.api.ForImportingRasterTiles;
 import net.pkhapps.vera.gis.server.tile.domain.Tile;
