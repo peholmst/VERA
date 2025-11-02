@@ -18,9 +18,9 @@ package net.pkhapps.vera.gis.server;
 
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
-import net.pkhapps.vera.gis.server.tile.RasterTileService;
 import net.pkhapps.vera.gis.server.tile.controller.TileRestController;
 import net.pkhapps.vera.gis.server.tile.filesystem.FileSystemTileStore;
+import net.pkhapps.vera.gis.server.tile.service.RasterTileService;
 import net.pkhapps.vera.security.AccessControl;
 import net.pkhapps.vera.security.AccessDeniedException;
 import net.pkhapps.vera.security.AuthenticationRequiredException;

@@ -44,6 +44,15 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
         </dependency>
@@ -72,6 +81,10 @@
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
+            <artifactId>gt-app-schema</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
             <artifactId>gt-epsg-extension</artifactId>
         </dependency>
         <dependency>
@@ -81,6 +94,10 @@
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-referencing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools.xsd</groupId>
+            <artifactId>gt-xsd-wfs</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
@@ -166,8 +183,7 @@
                                         <inputSchema>public</inputSchema>
                                     </database>
                                     <target>
-                                        <packageName>net.pkhapps.vera.gis.server.secondaryadapter.jooq</packageName>
-                                        <directory>target/generated-sources/jooq</directory>
+                                        <packageName>net.pkhapps.vera.gis.server.data.postgis.jooq</packageName>
                                     </target>
                                 </generator>
                             </jooq>

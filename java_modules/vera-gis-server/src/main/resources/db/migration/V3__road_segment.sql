@@ -32,7 +32,7 @@ create table road_segment
     geom              geometry(LineString, 3067) not null,
     updated_at        timestamp with time zone   not null default now(),
     primary key (id),
-    foreign key (municipality_code) references municipality_name (municipality_code)
+    foreign key (municipality_code) references municipality_code (municipality_code)
 );
 
 create index road_segment_geom_idx on road_segment using gist (geom);

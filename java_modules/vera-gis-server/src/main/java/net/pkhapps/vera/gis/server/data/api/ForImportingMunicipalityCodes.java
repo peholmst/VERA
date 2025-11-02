@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.security;
+package net.pkhapps.vera.gis.server.data.api;
 
-import net.pkhapps.vera.security.Permission;
+import org.jspecify.annotations.NullMarked;
 
-public enum AppPermission implements Permission {
-    READ_TILES, READ_TERRAIN_DATA
+import java.io.IOException;
+
+@NullMarked
+public interface ForImportingMunicipalityCodes {
+
+    void importJSONFile(InputStreamSupplier inputStream) throws IOException;
 }

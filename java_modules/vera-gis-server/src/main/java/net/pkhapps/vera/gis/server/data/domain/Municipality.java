@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.security;
+package net.pkhapps.vera.gis.server.data.domain;
 
-import net.pkhapps.vera.security.Permission;
-
-public enum AppPermission implements Permission {
-    READ_TILES, READ_TERRAIN_DATA
+public record Municipality() {
 }

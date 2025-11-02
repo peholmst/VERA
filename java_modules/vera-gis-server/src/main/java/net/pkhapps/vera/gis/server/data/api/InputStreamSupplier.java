@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.security;
+package net.pkhapps.vera.gis.server.data.api;
 
-import net.pkhapps.vera.security.Permission;
+import java.io.IOException;
+import java.io.InputStream;
 
-public enum AppPermission implements Permission {
-    READ_TILES, READ_TERRAIN_DATA
+@FunctionalInterface
+public
+interface InputStreamSupplier {
+    InputStream get() throws IOException;
 }

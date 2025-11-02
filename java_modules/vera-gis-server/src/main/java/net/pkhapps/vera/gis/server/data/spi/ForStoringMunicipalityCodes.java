@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package net.pkhapps.vera.gis.server.security;
+package net.pkhapps.vera.gis.server.data.spi;
 
-import net.pkhapps.vera.security.Permission;
+import net.pkhapps.vera.gis.server.data.domain.MunicipalityCode;
 
-public enum AppPermission implements Permission {
-    READ_TILES, READ_TERRAIN_DATA
+public interface ForStoringMunicipalityCodes {
+
+    void storeMunicipalityCodes(Iterable<MunicipalityCode> municipalityCodes);
 }

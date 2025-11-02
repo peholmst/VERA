@@ -27,7 +27,7 @@ create table address_point
     geom              geometry(Point, 3067)    not null,
     updated_at        timestamp with time zone not null default now(),
     primary key (id),
-    foreign key (municipality_code) references municipality_name (municipality_code)
+    foreign key (municipality_code) references municipality_code (municipality_code)
 );
 
 create index address_point_geom_idx on address_point using gist (geom);

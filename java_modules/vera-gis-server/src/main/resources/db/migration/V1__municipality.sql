@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-create table municipality_name
+create table municipality_code
 (
     municipality_code     varchar(3)               not null,
     municipality_name_fin text                     not null,
@@ -24,8 +24,8 @@ create table municipality_name
     primary key (municipality_code)
 );
 
-create index municipality_name_fin_idx on municipality_name (municipality_name_fin);
-create index municipality_name_swe_idx on municipality_name (municipality_name_swe);
+create index municipality_name_fin_idx on municipality_code (municipality_name_fin);
+create index municipality_name_swe_idx on municipality_code (municipality_name_swe);
 
 create sequence municipality_border_seq;
 
@@ -37,7 +37,7 @@ create table municipality_border
     geom              geometry(MultiPolygon, 3067) not null,
     updated_at        timestamp with time zone     not null default now(),
     primary key (id),
-    foreign key (municipality_code) references municipality_name (municipality_code)
+    foreign key (municipality_code) references municipality_code (municipality_code)
 );
 
 create index municipality_border_code_idx on municipality_border (municipality_code);
