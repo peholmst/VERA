@@ -1,61 +1,38 @@
-#include <stdexcept>
 #include <SDL3/SDL.h>
 
-class SDLException final : public std::runtime_error
-{
-public:
-    explicit SDLException(const std::string &message) : std::runtime_error(message + '\n' + SDL_GetError())
-    {
-    }
-};
+#include "AnalogClock.hpp"
+#include "SDLHelpers.hpp"
 
 int main()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
-    {
-        throw SDLException("SDL_Init failed");
-    }
+    SDLInitGuard sdl(SDL_INIT_VIDEO);
+    SDLCheck(SDL_HideCursor(), "SDL_HideCursor");
 
-    if (!SDL_HideCursor())
-    {
-        throw SDLException("SDL_HideCursor failed");
-    }
+    WindowPtr window{
+        SDL_CreateWindow("VERA Station Alert", 800, 600, SDL_WINDOW_FULLSCREEN),
+        SDLDeleter{}};
+    SDLCheck(window != nullptr, "SDL_CreateWindow");
 
-    SDL_Window *window{SDL_CreateWindow("VERA Station Alert", 800, 600, SDL_WINDOW_HIDDEN | SDL_WINDOW_FULLSCREEN)}; // TODO Make full size
+    RendererPtr renderer{
+        SDL_CreateRenderer(window.get(), nullptr),
+        SDLDeleter{}};
+    SDLCheck(renderer != nullptr, "SDL_CreateRenderer");
 
-    if (!window)
-    {
-        throw SDLException("SDL_CreateWindow failed");
-    }
-
-    SDL_Renderer *renderer{SDL_CreateRenderer(window, nullptr)};
-    if (!renderer)
-    {
-        throw SDLException("SDL_CreateRenderer failed");
-    }
-    else 
-    {
-        int w, h;
-        SDL_GetCurrentRenderOutputSize(renderer, &w, &h);
-        SDL_Log("Renderer: %s, Output size: %dx%d", SDL_GetRendererName(renderer), w, h);
-    }
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
-
-    SDL_ShowWindow(window);
+    auto windowSize = GetWindowSize(window);
+    SetRendererSize(renderer, windowSize);
 
     bool isRunning{true};
     SDL_Event event;
+    AnalogClock clock{renderer};
 
     // Main loop
     while (isRunning)
     {
+        clock.Paint();
         // Event loop
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_EVENT_QUIT)
+            if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_KEY_DOWN)
             {
                 isRunning = false;
             }
