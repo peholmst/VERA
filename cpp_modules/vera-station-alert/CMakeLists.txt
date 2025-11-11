@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(vendored/SDL)
+add_subdirectory(vendored/SDL_ttf)
 
 set(SDL3_FOUND TRUE)
 set(SDL3_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendored/SDL/include")
