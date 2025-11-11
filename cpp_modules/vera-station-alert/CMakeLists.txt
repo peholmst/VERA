@@ -8,9 +8,8 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(vendored/SDL)
 add_subdirectory(vendored/SDL_ttf)
 
-set(SDL3_FOUND TRUE)
-set(SDL3_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendored/SDL/include")
-set(SDL3_LIBRARIES SDL3::SDL3)
+# Point SDL3_gfx to the SDL3 build directory for CMake config files
+set(SDL3_DIR "${CMAKE_BINARY_DIR}/vendored/SDL")
 
 add_subdirectory(vendored/SDL3_gfx)
 
