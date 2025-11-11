@@ -4,3 +4,6 @@
 [submodule "cpp_modules/vera-station-alert/vendored/SDL_ttf"]
 	path = cpp_modules/vera-station-alert/vendored/SDL_ttf
 	url = git@github.com:libsdl-org/SDL_ttf.git
+[submodule "cpp_modules/vera-station-alert/vendored/SDL3_gfx"]
+	path = cpp_modules/vera-station-alert/vendored/SDL3_gfx
+	url = git@github.com:sabdul-khabir/SDL3_gfx.git
