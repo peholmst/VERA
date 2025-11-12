@@ -1,5 +1,3 @@
-#include <SDL3_gfxPrimitives.h>
-
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -20,32 +18,30 @@ static SDL_FPoint CalculatePointFromCenter(const SDL_FPoint &center, const float
                       (float)(center.y - yOffset)};
 }
 
-static void PaintClockFace(SDL_Renderer *renderer, const SDL_FPoint &center, const float radius)
+static void PaintClockFace(const RendererPtr &renderer, const SDL_FPoint &center, const float radius)
 {
     // Clear
-    SDL_SetRenderDrawColor(renderer, 36, 37, 39, 255);
-    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer.get(), 36, 37, 39, 255);
+    SDL_RenderClear(renderer.get());
 
     // Face
-    filledCircleColor(renderer, center.x, center.y, radius, CLOCK_FACE_COLOR);
-
-    /*    // Face
-        filledCircleColor(renderer, centerX, centerY, radius * 0.95, CLOCK_FACE_COLOR);*/
+    PaintFilledCircle(renderer, center.x, center.y, radius, CLOCK_FACE_COLOR);
 
     // TODO Ticks
 
     // TODO Numbers
 }
 
-static void PaintHand(SDL_Renderer *renderer, const SDL_FPoint &center, const float radius, const float angleRadians, const float thickness, const uint32_t color)
+static void PaintHand(const RendererPtr &renderer, const SDL_FPoint &center, const float radius, const float angleRadians, const float thickness, const uint32_t color)
 {
     auto endPoint = CalculatePointFromCenter(center, radius, angleRadians);
-    thickLineColor(renderer, center.x, center.y, endPoint.x, endPoint.y, thickness, color);
+    auto endCircleRadius = thickness / 2.0f;
+    PaintLine(renderer, center.x, center.y, endPoint.x, endPoint.y, thickness, color);
+    PaintFilledCircle(renderer, endPoint.x, endPoint.y, endCircleRadius, color);
 }
 
-static void PaintHands(SDL_Renderer *renderer, const SDL_FPoint &center, const float radius, const std::chrono::hh_mm_ss<std::chrono::system_clock::duration> &time)
+static void PaintHands(const RendererPtr &renderer, const SDL_FPoint &center, const float radius, const std::chrono::hh_mm_ss<std::chrono::system_clock::duration> &time)
 {
-    // TODO Use seconds instead and calculate the hours, minutes and seconds from it
     auto hours = time.hours().count() % 12;
     auto minutes = time.minutes().count();
     auto seconds = time.seconds().count();
@@ -63,27 +59,45 @@ static void PaintHands(SDL_Renderer *renderer, const SDL_FPoint &center, const f
     PaintHand(renderer, center, radius * 0.7, secondRadians, radius * 0.01, CLOCK_SECOND_HAND_COLOR);
 
     // Center
-    filledCircleColor(renderer, center.x, center.y, radius * 0.04, CLOCK_SECOND_HAND_COLOR);
-    filledCircleColor(renderer, center.x, center.y, radius * 0.02, CLOCK_MINUTE_HAND_COLOR);
+    PaintFilledCircle(renderer, center.x, center.y, radius * 0.04, CLOCK_SECOND_HAND_COLOR);
+    PaintFilledCircle(renderer, center.x, center.y, radius * 0.02, CLOCK_MINUTE_HAND_COLOR);
 }
 
 AnalogClock::AnalogClock(const RendererPtr &renderer) : renderer(renderer)
 {
-    auto size = GetRendererSize(renderer);
+    const auto size = GetRendererSize(renderer);
     center = {size.width / 2.0f, size.height / 2.0f};
     radius = std::min(size.height, size.width) / 2 - 20;
+
+    const auto hiResHeight = size.height * 2;
+    const auto hiResWidth = size.width * 2;
+    hiResTexture = TexturePtr{
+        SDL_CreateTexture(renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, hiResWidth, hiResHeight),
+        SDLDeleter{}
+    };
+    SDL_SetTextureBlendMode(hiResTexture.get(), SDL_BLENDMODE_BLEND);
 }
 
 void AnalogClock::Paint()
 {
     using namespace std::chrono;
+    // TODO This seems quite complex to get the current hour, minute and second. Can it be simplified?
     auto now = system_clock::now();
     auto local = zoned_time{current_zone(), now}.get_local_time();
     auto today = floor<days>(local);
     auto timeSinceMidnight = local - today;
     hh_mm_ss hms{timeSinceMidnight};
     
-    PaintClockFace(renderer.get(), center, radius);
-    PaintHands(renderer.get(), center, radius, hms);
+    // Paint in 2x (high resolution), then scale down to get anti-aliasing
+
+    SDL_SetRenderTarget(renderer.get(), hiResTexture.get());
+    SDL_SetRenderScale(renderer.get(), 2.0f, 2.0f);
+
+    PaintClockFace(renderer, center, radius);
+    PaintHands(renderer, center, radius, hms);
+
+    SDL_SetRenderTarget(renderer.get(), nullptr);
+    SDL_SetRenderScale(renderer.get(), 1.0f, 1.0f);
+    RenderTexture(renderer, hiResTexture);
     SDL_RenderPresent(renderer.get());
 }

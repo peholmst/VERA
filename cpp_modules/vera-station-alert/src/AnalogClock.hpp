@@ -11,7 +11,8 @@ public:
     AnalogClock(const RendererPtr &renderer);
     void Paint();
 private:
-    const RendererPtr &renderer;
+    const RendererPtr &renderer;    
+    TexturePtr hiResTexture;
     float radius;
     SDL_FPoint center;
 };
