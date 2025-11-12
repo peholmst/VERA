@@ -8,11 +8,6 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(vendored/SDL)
 add_subdirectory(vendored/SDL_ttf)
 
-# Point SDL3_gfx to the SDL3 build directory for CMake config files
-set(SDL3_DIR "${CMAKE_BINARY_DIR}/vendored/SDL")
-
-add_subdirectory(vendored/SDL3_gfx)
-
 add_executable(VeraStationAlert 
     src/main.cpp
     src/AnalogClock.cpp
@@ -20,10 +15,10 @@ add_executable(VeraStationAlert
 
 target_link_libraries(VeraStationAlert PRIVATE 
     SDL3::SDL3 
-    SDL3_gfx_Static
+    SDL3_ttf-static
 )
 
 target_include_directories(VeraStationAlert PRIVATE
     "${CMAKE_SOURCE_DIR}/vendored/SDL/include"
-    "${CMAKE_SOURCE_DIR}/vendored/SDL3_gfx"
+    "${CMAKE_SOURCE_DIR}/vendored/SDL_ttf/include"
 )
