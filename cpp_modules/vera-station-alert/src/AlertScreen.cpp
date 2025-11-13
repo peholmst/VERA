@@ -1,4 +1,5 @@
 #include "AlertScreen.hpp"
+#include "FontHelpers.hpp"
 
 AlertScreen::AlertScreen(const RendererPtr &renderer) : renderer(renderer)
 {
@@ -7,5 +8,6 @@ AlertScreen::AlertScreen(const RendererPtr &renderer) : renderer(renderer)
 
 void AlertScreen::Paint(const Alert &alert)
 {
-    // TODO Implement me
+    auto font = CreateRobotoRegular(18.0f);
+    // TODO Make helpers for drawing text!
 }

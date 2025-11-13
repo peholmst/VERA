@@ -2,6 +2,7 @@
 #define __SDL_HELPERS_HPP__
 
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include <cmath>
 #include <memory>
@@ -42,11 +43,20 @@ struct SDLDeleter
             SDL_DestroyTexture(p);
         }
     }
+
+    void operator()(TTF_Font *p) const noexcept
+    {
+        if (p)
+        {
+            TTF_CloseFont(p);
+        }
+    }
 };
 
 using WindowPtr = std::unique_ptr<SDL_Window, SDLDeleter>;
 using RendererPtr = std::unique_ptr<SDL_Renderer, SDLDeleter>;
 using TexturePtr = std::unique_ptr<SDL_Texture, SDLDeleter>;
+using FontPtr = std::unique_ptr<TTF_Font, SDLDeleter>;
 
 inline void SDLCheck(bool success, const char *context)
 {
@@ -61,9 +71,11 @@ struct SDLInitGuard
     SDLInitGuard(SDL_InitFlags flags)
     {
         SDLCheck(SDL_Init(flags), "SDL_Init");
+        SDLCheck(TTF_Init(), "TTF_Init");
     }
     ~SDLInitGuard()
     {
+        TTF_Quit();
         SDL_Quit();
     }
 };
@@ -151,10 +163,7 @@ inline void PaintLine(const RendererPtr &renderer, const float x1, const float y
 
 inline void RenderTexture(const RendererPtr &renderer, const TexturePtr &texture)
 {
-    int w, h;
-    SDLCheck(SDL_GetCurrentRenderOutputSize(renderer.get(), &w, &h), "SDL_GetCurrentRenderOutputSize");
-    SDL_FRect dst{0, 0, w, h};
-    SDLCheck(SDL_RenderTexture(renderer.get(), texture.get(), nullptr, &dst), "SDL_RenderTexture");
+    SDLCheck(SDL_RenderTexture(renderer.get(), texture.get(), nullptr, nullptr), "SDL_RenderTexture");
 }
 
 inline uint32_t RGBA(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255)

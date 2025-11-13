@@ -5,6 +5,7 @@
 #include "AnalogClock.hpp"
 #include "SDLHelpers.hpp"
 
+// TODO Read from config file
 const auto alertTimeout = std::chrono::seconds(180);
 const auto flashDuration = std::chrono::seconds(10);
 
@@ -23,6 +24,8 @@ int main()
         SDLDeleter{}};
     SDLCheck(renderer != nullptr, "SDL_CreateRenderer");
 
+
+    
     auto windowSize = GetWindowSize(window);
     SetRendererSize(renderer, windowSize);
 
@@ -41,7 +44,7 @@ int main()
         "Badhusgatan 4",
         "Lekstuga brinner",
         {"RVS911", "RVS903"}};
-    activeAlerts.Push(testAlert);
+    activeAlerts.Push(testAlert); // TODO when this happens, also turn on the lights and sound
 
     // Main loop
     while (isRunning)
