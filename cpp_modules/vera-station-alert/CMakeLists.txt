@@ -10,6 +10,8 @@ add_subdirectory(vendored/SDL_ttf)
 
 add_executable(VeraStationAlert 
     src/main.cpp
+    src/Alert.cpp
+    src/AlertScreen.cpp
     src/AnalogClock.cpp
 )
 
