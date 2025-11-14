@@ -12,6 +12,7 @@ public:
 
 private:
     const RendererPtr &renderer;
+    TextEnginePtr textEngine;
     Size size;
 };
 

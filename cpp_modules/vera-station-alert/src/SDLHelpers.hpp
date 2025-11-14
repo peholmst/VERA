@@ -51,12 +51,30 @@ struct SDLDeleter
             TTF_CloseFont(p);
         }
     }
+
+    void operator()(TTF_TextEngine *p) const noexcept
+    {
+        if (p)
+        {
+            TTF_DestroyRendererTextEngine(p);
+        }
+    }
+
+    void operator()(TTF_Text *p) const noexcept
+    {
+        if (p)
+        {
+            TTF_DestroyText(p);
+        }
+    }
 };
 
 using WindowPtr = std::unique_ptr<SDL_Window, SDLDeleter>;
 using RendererPtr = std::unique_ptr<SDL_Renderer, SDLDeleter>;
 using TexturePtr = std::unique_ptr<SDL_Texture, SDLDeleter>;
 using FontPtr = std::unique_ptr<TTF_Font, SDLDeleter>;
+using TextEnginePtr = std::unique_ptr<TTF_TextEngine, SDLDeleter>;
+using TextPtr = std::unique_ptr<TTF_Text, SDLDeleter>;
 
 inline void SDLCheck(bool success, const char *context)
 {
@@ -159,6 +177,15 @@ inline void PaintLine(const RendererPtr &renderer, const float x1, const float y
     // Two triangles form the rectangle
     const int indices[6] = {0, 1, 2, 0, 2, 3};
     SDLCheck(SDL_RenderGeometry(renderer.get(), nullptr, verts, 4, indices, 6), "SDL_RenderGeometry");
+}
+
+inline void PaintText(const TextEnginePtr &textEngine, const FontPtr &font, const std::string &text, const float x, const float y, const uint32_t color)
+{
+    const Uint8 *c = (Uint8 *)&color;
+    TextPtr t{TTF_CreateText(textEngine.get(), font.get(), text.c_str(), 0), SDLDeleter{}};
+    SDLCheck(t != nullptr, "TTF_CreateText");
+    SDLCheck(TTF_SetTextColor(t.get(), c[0], c[1], c[2], c[3]), "TTF_SetTextColor");
+    SDLCheck(TTF_DrawRendererText(t.get(), x, y), "TTF_DrawRendererText");
 }
 
 inline void RenderTexture(const RendererPtr &renderer, const TexturePtr &texture)
