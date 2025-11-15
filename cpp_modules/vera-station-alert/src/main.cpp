@@ -15,7 +15,7 @@ int main()
     SDLCheck(SDL_HideCursor(), "SDL_HideCursor");
 
     WindowPtr window{
-        SDL_CreateWindow("VERA Station Alert", 800, 600, SDL_WINDOW_FULLSCREEN),
+        SDL_CreateWindow("VERA Station Alert", 1920, 1080, SDL_WINDOW_FULLSCREEN),
         SDLDeleter{}};
     SDLCheck(window != nullptr, "SDL_CreateWindow");
 
@@ -38,8 +38,9 @@ int main()
     // TODO Replace testAlert with Websocket client
     const Alert testAlert{
         Timestamp::clock::now(),
-        "401",
-        "B",
+        "402",
+        "A",
+        "byggnadsbrand: medelstor",
         "PARGAS",
         "Badhusgatan 4",
         "Lekstuga brinner",

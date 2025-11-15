@@ -16,6 +16,7 @@ struct Alert
     Timestamp timestamp;
     std::string assignment_code;
     std::string assignment_urgency;
+    std::string assignment_description;
     std::string municipality;
     std::string address;
     std::string details;
