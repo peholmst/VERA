@@ -3,6 +3,16 @@ import { html } from "../util";
 const template = document.createElement("template");
 template.innerHTML = html`
     <style>
+        :host {
+            display: block;
+            height: 100vh;
+        }
+
+        #primary-window {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+        }         
     </style>
     <div id="secondary-window" role="application">
         This is the secondary window.
