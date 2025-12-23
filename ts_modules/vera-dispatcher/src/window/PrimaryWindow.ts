@@ -1,4 +1,20 @@
 import { html } from "../util";
+import "../component/MapView";
+import "../component/AddressLookup";
+import { post } from "../session/channel";
+import { windowClosed, windowHeartbeat, windowReady } from "../session/messages";
+
+const WINDOW_NAME = "primary";
+
+post(windowReady(WINDOW_NAME));
+
+window.addEventListener("beforeunload", () => {
+    post(windowClosed(WINDOW_NAME));
+});
+
+setInterval(() => {
+    post(windowHeartbeat(WINDOW_NAME, Date.now()));
+}, 2000);
 
 const template = document.createElement("template");
 template.innerHTML = html`
@@ -12,10 +28,14 @@ template.innerHTML = html`
             display: grid;
             grid-template-columns: 1fr;
             grid-template-rows: 1fr;
+            height: 100%;
         }        
+
+        #map-view {
+        }
     </style>
     <div id="primary-window" role="application">
-        This is the primary window.
+        <vera-map-view id="map-view"></vera-map-view>
     </div>
 `;
 

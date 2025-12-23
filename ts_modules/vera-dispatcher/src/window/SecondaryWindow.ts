@@ -1,4 +1,18 @@
 import { html } from "../util";
+import { post } from "../session/channel";
+import { windowClosed, windowHeartbeat, windowReady } from "../session/messages";
+
+const WINDOW_NAME = "secondary";
+
+post(windowReady(WINDOW_NAME));
+
+window.addEventListener("beforeunload", () => {
+    post(windowClosed(WINDOW_NAME));
+});
+
+setInterval(() => {
+    post(windowHeartbeat(WINDOW_NAME, Date.now()));
+}, 2000);
 
 const template = document.createElement("template");
 template.innerHTML = html`
@@ -8,7 +22,7 @@ template.innerHTML = html`
             height: 100vh;
         }
 
-        #primary-window {
+        #secondary-window {
             display: grid;
             grid-template-columns: 1fr;
             grid-template-rows: 1fr;
