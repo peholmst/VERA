@@ -20,32 +20,11 @@ setInterval(() => {
 const template = document.createElement("template");
 template.innerHTML = html`
     <style>
-        :host {
-            display: block;
-            height: 100vh;
-        }
-
         #primary-window {
             display: flex;
             flex-direction: column;
             height: 100%;
         }        
-
-        #header {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--vera-space-m);
-            padding: var(--vera-space-s) var(--vera-space-m);
-            background-color: var(--vera-app-header-background-color);
-            color: var(--vera-app-header-color);
-        }
-
-        #header .app-name {
-            font-weight: 600;
-            font-size: var(--vera-font-size-l);
-        }
 
         #content-container {
             flex-grow: 1;
@@ -81,36 +60,16 @@ template.innerHTML = html`
             display: none;
         }
 
-        .toolbar {
-            display: flex;
-            gap: var(--vera-space-xs);
-        }
-
-        .toolbar button {
-            border: 0;
-            padding: var(--vera-space-xs);
-            border-radius: var(--vera-border-radius-s);
-            background-color: transparent;
-            cursor: pointer;
-            color: inherit;
-        }
-
-        .toolbar button vera-icon {
-            width: var(--vera-icon-size-s);
-            height: var(--vera-icon-size-s);
-        }
-
-        .toolbar button:hover, 
         .layout-0-1 #toggle-0-1,
         .layout-1-2 #toggle-1-2,
         .layout-1-1 #toggle-1-1,
         .layout-2-1 #toggle-2-1,
         .layout-1-0 #toggle-1-0 {
-            background-color: var(--vera-toolbar-button-hover-color);
+            background-color: var(--vera-toolbar-button-selected-color);
         }
     </style>
-    <div id="primary-window" role="application" class="layout-1-1">
-        <div id="header">
+    <main id="primary-window" role="application" class="layout-1-1">
+        <header class="app-header">
             <span class="app-name">VERA</span>
             <div class="toolbar">
                 <button id="toggle-0-1" title="Show resources only">
@@ -129,52 +88,49 @@ template.innerHTML = html`
                     <vera-icon name="layout-1-0"></vera-icon>
                 </button>
             </div>
-        </div>
+        </header>
         <div id="content-container">
             <vera-map-view id="map-view"></vera-map-view>
             <vera-resource-dashboard id="resource-dashboard"></vera-resource-dashboard>
         </div>
-    </div>
+    </main>
 `;
 
 type LayoutClassName = "layout-0-1" | "layout-1-2" | "layout-1-1" | "layout-2-1" | "layout-1-0";
 
-export class PrimaryWindow extends HTMLElement {
+class PrimaryWindow extends HTMLElement {
 
     windowDiv: HTMLDivElement | null = null;
 
     constructor() {
         super();
-        this.attachShadow({ mode: "open" });
+        this.replaceChildren(template.content.cloneNode(true));
+
+        // Lookup important elements
+        this.windowDiv = this.$("primary-window") as HTMLDivElement;
+
+        const toggle01 = this.$("toggle-0-1") as HTMLButtonElement;
+        const toggle12 = this.$("toggle-1-2") as HTMLButtonElement;
+        const toggle11 = this.$("toggle-1-1") as HTMLButtonElement;
+        const toggle21 = this.$("toggle-2-1") as HTMLButtonElement;
+        const toggle10 = this.$("toggle-1-0") as HTMLButtonElement;
+
+        // Register listeners
+        toggle01.addEventListener("click", () => this.setLayout("layout-0-1"));
+        toggle12.addEventListener("click", () => this.setLayout("layout-1-2"));
+        toggle11.addEventListener("click", () => this.setLayout("layout-1-1"));
+        toggle21.addEventListener("click", () => this.setLayout("layout-2-1"));
+        toggle10.addEventListener("click", () => this.setLayout("layout-1-0"));
     }
 
     connectedCallback() {
-        if (!this.shadowRoot!.hasChildNodes()) {
-            this.shadowRoot!.appendChild(template.content.cloneNode(true));
-
-            // Lookup important elements
-            this.windowDiv = this.$("primary-window") as HTMLDivElement;
-
-            const toggle01 = this.$("toggle-0-1") as HTMLButtonElement;
-            const toggle12 = this.$("toggle-1-2") as HTMLButtonElement;
-            const toggle11 = this.$("toggle-1-1") as HTMLButtonElement;
-            const toggle21 = this.$("toggle-2-1") as HTMLButtonElement;
-            const toggle10 = this.$("toggle-1-0") as HTMLButtonElement;
-
-            // Register listeners
-            toggle01.addEventListener("click", () => this.setLayout("layout-0-1"));
-            toggle12.addEventListener("click", () => this.setLayout("layout-1-2"));
-            toggle11.addEventListener("click", () => this.setLayout("layout-1-1"));
-            toggle21.addEventListener("click", () => this.setLayout("layout-2-1"));
-            toggle10.addEventListener("click", () => this.setLayout("layout-1-0"));
-        }
-    }
-
-    $(id: string): HTMLElement | null {
-        return this.shadowRoot!.getElementById(id);
     }
 
     disconnectedCallback() {
+    }
+
+    $(id: string): HTMLElement | null {
+        return this.querySelector("#" + id);
     }
 
     setLayout(layout: LayoutClassName) {

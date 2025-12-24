@@ -1,36 +1,85 @@
 html {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 1rem;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 1rem;
 
-    --vera-app-header-background-color: #162456;
-    --vera-app-header-color: #F1F5F9;
-    
-    --vera-toolbar-button-hover-color: rgba(255,255,255,0.2);
+  --vera-app-header-background-color: #162456;
+  --vera-app-header-color: #F1F5F9;
 
-    --vera-space-xl: 2.5rem;
-    --vera-space-l: 1.5rem;
-    --vera-space-m: 1rem;
-    --vera-space-s: .5rem;
-    --vera-space-xs: .25rem;
+  --vera-toolbar-button-hover-color: rgba(255, 255, 255, 0.1);
+  --vera-toolbar-button-selected-color: rgba(255, 255, 255, 0.2);
 
-    --vera-font-size-xxxl: 2.5rem;
-    --vera-font-size-xxl: 1.75rem;
-    --vera-font-size-xl: 1.375rem;
-    --vera-font-size-l: 1.125rem;
-    --vera-font-size-m: 1rem;
-    --vera-font-size-s: .875rem;
-    --vera-font-size-xs: .8125rem;
-    --vera-font-size-xss: 0.75rem;
+  --vera-space-xl: 2.5rem;
+  --vera-space-l: 1.5rem;
+  --vera-space-m: 1rem;
+  --vera-space-s: .5rem;
+  --vera-space-xs: .25rem;
 
-    --vera-icon-size-l: 2.25em;
-    --vera-icon-size-m: 1.5em;
-    --vera-icon-size-s: 1.25em;
+  --vera-font-size-xxxl: 2.5rem;
+  --vera-font-size-xxl: 1.75rem;
+  --vera-font-size-xl: 1.375rem;
+  --vera-font-size-l: 1.125rem;
+  --vera-font-size-m: 1rem;
+  --vera-font-size-s: .875rem;
+  --vera-font-size-xs: .8125rem;
+  --vera-font-size-xss: 0.75rem;
 
-    --vera-border-radius-l: .5em;
-    --vera-border-radius-m: .25em;
-    --vera-border-radius-s: .25em;
+  --vera-icon-size-l: 2.25em;
+  --vera-icon-size-m: 1.5em;
+  --vera-icon-size-s: 1.25em;
+
+  --vera-border-radius-l: .5em;
+  --vera-border-radius-m: .25em;
+  --vera-border-radius-s: .25em;
 }
 
 body {
   margin: 0;
+}
+
+#app {
+  display: block;
+  height: 100vh;
+}
+
+/* Application Header */
+
+.app-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vera-space-m);
+  padding: var(--vera-space-s) var(--vera-space-m);
+  background-color: var(--vera-app-header-background-color);
+  color: var(--vera-app-header-color);
+}
+
+.app-header .app-name {
+  font-weight: 600;
+  font-size: var(--vera-font-size-l);
+}
+
+/* Toolbar */
+
+.toolbar {
+  display: flex;
+  gap: var(--vera-space-xs);
+}
+
+.toolbar button {
+  border: 0;
+  padding: var(--vera-space-xs);
+  border-radius: var(--vera-border-radius-s);
+  background-color: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+.toolbar button vera-icon {
+  width: var(--vera-icon-size-s);
+  height: var(--vera-icon-size-s);
+}
+
+.toolbar button:hover {
+  background-color: var(--vera-toolbar-button-hover-color);
 }
