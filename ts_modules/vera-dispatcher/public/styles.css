@@ -1,6 +1,34 @@
 html {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 11pt;
+    font-size: 1rem;
+
+    --vera-app-header-background-color: #162456;
+    --vera-app-header-color: #F1F5F9;
+    
+    --vera-toolbar-button-hover-color: rgba(255,255,255,0.2);
+
+    --vera-space-xl: 2.5rem;
+    --vera-space-l: 1.5rem;
+    --vera-space-m: 1rem;
+    --vera-space-s: .5rem;
+    --vera-space-xs: .25rem;
+
+    --vera-font-size-xxxl: 2.5rem;
+    --vera-font-size-xxl: 1.75rem;
+    --vera-font-size-xl: 1.375rem;
+    --vera-font-size-l: 1.125rem;
+    --vera-font-size-m: 1rem;
+    --vera-font-size-s: .875rem;
+    --vera-font-size-xs: .8125rem;
+    --vera-font-size-xss: 0.75rem;
+
+    --vera-icon-size-l: 2.25em;
+    --vera-icon-size-m: 1.5em;
+    --vera-icon-size-s: 1.25em;
+
+    --vera-border-radius-l: .5em;
+    --vera-border-radius-m: .25em;
+    --vera-border-radius-s: .25em;
 }
 
 body {

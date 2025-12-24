@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="layout-0-1" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="3" ry="3" stroke-width="2"/>
+        <line x1="4" x2="4" y1="2" y2="22" stroke-width="2"/>
+    </symbol>
+    <symbol id="layout-1-0" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="3" ry="3" stroke-width="2"/>
+        <line x1="20" x2="20" y1="2" y2="22" stroke-width="2"/>
+    </symbol>
+    <symbol id="layout-1-1" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="3" ry="3" stroke-width="2"/>
+        <line x1="12" x2="12" y1="2" y2="22" stroke-width="2"/>
+    </symbol>
+    <symbol id="layout-1-2" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="3" ry="3" stroke-width="2"/>
+        <line x1="9" x2="9" y1="2" y2="22" stroke-width="2"/>
+    </symbol>
+    <symbol id="layout-2-1" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="3" ry="3" stroke-width="2"/>
+        <line x1="15" x2="15" y1="2" y2="22" stroke-width="2"/>
+    </symbol>
+</svg>
