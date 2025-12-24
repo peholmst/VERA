@@ -1,7 +1,25 @@
-class Icon extends HTMLElement {
+import { html } from "../util";
 
-    svg: SVGElement;
-    use: SVGUseElement;
+const template = document.createElement("template");
+template.innerHTML = html`
+    <style>
+        :host {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        svg {
+            display: block;
+            fill: transparent;
+            stroke: currentcolor;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <svg><use></use></svg>
+`;
+
+class Icon extends HTMLElement {
 
     static get observedAttributes() {
         return ["name"];
@@ -9,23 +27,13 @@ class Icon extends HTMLElement {
 
     constructor() {
         super();
-        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-        this.svg.appendChild(this.use);
-        
-        this.appendChild(this.svg);
-
-        this.style.display = "inline-block";
-        this.style.verticalAlign = "middle";
-        
-        this.svg.style.display = "block";
-        this.svg.style.fill = "transparent";
-        this.svg.style.stroke = "currentcolor";
-        this.svg.style.width = "100%";
-        this.svg.style.height= "100%";
+        this.attachShadow({ mode: "open" });
     }
 
     connectedCallback() {
+        if (!this.shadowRoot!.hasChildNodes()) {
+            this.shadowRoot!.appendChild(template.content.cloneNode(true));
+        }
         this._updateIcon();
     }
 
@@ -35,7 +43,8 @@ class Icon extends HTMLElement {
 
     _updateIcon() {
         const name = this.getAttribute("name");
-        this.use.setAttribute("href", `/icons.svg#${name}`);
+        const use = this.shadowRoot!.querySelector("use");
+        use?.setAttribute("href", `/icons.svg#${name}`);
     }
 }
 
