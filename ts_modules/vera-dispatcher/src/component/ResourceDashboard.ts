@@ -3,9 +3,12 @@ import { html } from "../util";
 const template = document.createElement("template");
 template.innerHTML = html`
     <style>
+        :host {
+            background: yellow;
+        }
     </style>
     <div id="resource-dashboard">
-        Resource Dashboard
+        Resource Dashboard (PLACEHOLDER)
     </div>
 `;
 

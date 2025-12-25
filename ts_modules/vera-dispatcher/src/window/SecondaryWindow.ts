@@ -1,52 +1,48 @@
 import { html } from "../util";
-import { post } from "../session/channel";
-import { windowClosed, windowHeartbeat, windowReady } from "../session/messages";
-
-const WINDOW_NAME = "secondary";
-
-post(windowReady(WINDOW_NAME));
-
-window.addEventListener("beforeunload", () => {
-    post(windowClosed(WINDOW_NAME));
-});
-
-setInterval(() => {
-    post(windowHeartbeat(WINDOW_NAME, Date.now()));
-}, 2000);
+import { registerWindowLifecycle } from "../session/windowLifecycle";
 
 const template = document.createElement("template");
 template.innerHTML = html`
     <style>
-        :host {
-            display: block;
-            height: 100vh;
-        }
-
-        #secondary-window {
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows: 1fr;
-        }         
+      
     </style>
-    <div id="secondary-window" role="application">
-        This is the secondary window.
-    </div>
+    <main id="secondary-window" role="application">
+        <header class="app-header">
+            <span class="app-name">VERA</span>
+        </header>
+        <p>
+            This is the secondary window.
+        </p>
+    </main>
 `;
 
-export class SecondaryWindow extends HTMLElement {
+class SecondaryWindow extends HTMLElement {
+
+    private unregisterWindowLifecycle?: () => void;
+    private windowDiv?: HTMLDivElement;
+
     constructor() {
         super();
-        this.attachShadow({ mode: "open" });
     }
 
     connectedCallback() {
-        if (!this.shadowRoot!.hasChildNodes()) {
-            this.shadowRoot!.appendChild(template.content.cloneNode(true));
+        if (!this.windowDiv) {
+            this.replaceChildren(template.content.cloneNode(true));
+
+            // Lookup important elements
+            this.windowDiv = this.byId<HTMLDivElement>("secondary-window");
+
         }
+        this.unregisterWindowLifecycle = registerWindowLifecycle("secondary");
     }
 
     disconnectedCallback() {
+        this.unregisterWindowLifecycle?.();
     }
+
+    private byId<T extends HTMLElement>(id: string): T {
+        return this.querySelector("#" + id)! as T;
+    }    
 }
 
 customElements.define("vera-secondary-window", SecondaryWindow);

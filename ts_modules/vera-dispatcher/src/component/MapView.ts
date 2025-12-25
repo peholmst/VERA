@@ -33,30 +33,42 @@ const crs3067 = new L.Proj.CRS('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +to
 );
 
 export class MapView extends HTMLElement {
-    private shadow: ShadowRoot;
+
+    private resizeObserver: ResizeObserver | null = null;
+    private mapContainer: HTMLDivElement | null = null;
 
     constructor() {
         super();
-        this.shadow = this.attachShadow({ mode: "open" });
-        this.shadow.appendChild(template.content.cloneNode(true));
+        this.attachShadow({ mode: "open" });
     }
 
     connectedCallback() {
-        const mapContainer = this.shadow.getElementById("mapContainer") as HTMLDivElement;
-        const map = L.map(mapContainer, {
-            center: [60.30669, 22.30100], // TODO Store center somewhere and fetch it from there
-            zoom: 10,
-            crs: crs3067,
-            worldCopyJump: false,
-        });
-        L.tileLayer('http://localhost:7070/gis/raster/taustakartta/{z}/{x}/{y}.png', {
-            minZoom: 2,
-            minNativeZoom: 2,
-            maxZoom: 14,
-            maxNativeZoom: 14,
-            tileSize: 256,
-            attribution: '&copy; Maanmittauslaitos'
-        }).addTo(map);
+        if (!this.shadowRoot!.hasChildNodes()) {
+            this.shadowRoot!.appendChild(template.content.cloneNode(true));
+            this.mapContainer = this.shadowRoot!.getElementById("mapContainer") as HTMLDivElement;
+            const map = L.map(this.mapContainer, {
+                center: [60.30669, 22.30100], // TODO Store center somewhere and fetch it from there
+                zoom: 10,
+                crs: crs3067,
+                worldCopyJump: false,
+            });
+            this.resizeObserver = new ResizeObserver(() => map.invalidateSize());
+            L.tileLayer('http://localhost:7070/gis/raster/taustakartta/{z}/{x}/{y}.png', {
+                minZoom: 2,
+                minNativeZoom: 2,
+                maxZoom: 14,
+                maxNativeZoom: 14,
+                tileSize: 256,
+                attribution: '&copy; Maanmittauslaitos'
+            }).addTo(map);
+        }
+        if (this.resizeObserver && this.mapContainer) {
+            this.resizeObserver.observe(this.mapContainer);
+        }
+    }
+
+    disconnectedCallback() {
+        this.resizeObserver?.disconnect();
     }
 }
 
