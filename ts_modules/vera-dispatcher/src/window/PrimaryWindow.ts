@@ -17,10 +17,6 @@ template.innerHTML = html`
             display: none;
         }
 
-        .layout-0-1 #content-container {
-            grid-template-columns: 0fr 1fr;
-        }
-
         .layout-1-2 #content-container {
             grid-template-columns: 1fr 2fr;
         }
@@ -31,10 +27,6 @@ template.innerHTML = html`
 
         .layout-2-1 #content-container {
             grid-template-columns: 2fr 1fr;
-        }
-
-        .layout-1-0 #content-container {
-            grid-template-columns: 1fr 0fr;
         }
 
         .layout-1-0 #resource-dashboard {
