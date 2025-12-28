@@ -7,10 +7,19 @@ export type User = {
     token?: string;
 }
 
+export type WebSocketConnectionState = "connected" | "connecting" | "disconnected";
+
 export type SessionInfo = {
     user?: User;
     active?: boolean;
+    webSocketConnectionState: WebSocketConnectionState;
 };
+
+export function createSessionInfoStore(): Store<SessionInfo> {
+    return new Store<SessionInfo>({
+        webSocketConnectionState: "disconnected"
+    });
+}
 
 export function registerSessionMessageHandler(store: Store<SessionInfo>): () => void {
     const unregisterMessageHandler = registerMessageHandler(msg => {
@@ -26,9 +35,9 @@ export function registerSessionMessageHandler(store: Store<SessionInfo>): () => 
                 });
                 break;
             case "SESSION_CLOSED":
-                store.update(state => { 
+                store.update(state => {
                     state.user = undefined;
-                    state.active = false; 
+                    state.active = false;
                 });
                 break;
         }

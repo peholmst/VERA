@@ -1,23 +1,26 @@
 import { html } from "../util";
 import { registerWindowLifecycle } from "../session/windowLifecycle";
-import { registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
-import { Store } from "../store/Store";
+import { createSessionInfoStore, registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
+import { WebSocketClient } from "../session/WebSocketClient";
 
 const template = document.createElement("template");
 template.innerHTML = html`
     <style>
-      
+        #content-container {
+            flex-grow: 1;
+            display: flex;        
+        }      
     </style>
     <main id="secondary-window" role="application">
         <header class="app-header">
             <span class="app-name">VERA</span>
         </header>
-        <p>
+        <div id="content-container">
             This is the secondary window.
-        </p>
+        </div>
         <footer class="app-footer">
             <span id="app-user"></span>
-            <span id="app-connection-status"></span>
+            <span id="app-connection-status" class="success">Connected</span>
         </footer>
         <dialog id="session-error-dialog" closedby="none">
         </dialog>
@@ -28,7 +31,8 @@ class SecondaryWindow extends HTMLElement {
 
     private unregisterWindowLifecycle?: () => void;
     private unregisterSessionMessageHandler?: () => void;
-    private sessionIntoStore: Store<SessionInfo> = new Store({});
+    private sessionIntoStore = createSessionInfoStore();
+    private client = new WebSocketClient(this.sessionIntoStore);
     private windowDiv?: HTMLDivElement;
 
     constructor() {
@@ -47,9 +51,11 @@ class SecondaryWindow extends HTMLElement {
         }
         this.unregisterSessionMessageHandler = registerSessionMessageHandler(this.sessionIntoStore);
         this.unregisterWindowLifecycle = registerWindowLifecycle("secondary");
+        this.client.start();
     }
 
     disconnectedCallback() {
+        this.client.stop();
         this.unregisterWindowLifecycle?.();
         this.unregisterSessionMessageHandler?.();
     }
@@ -62,10 +68,27 @@ class SecondaryWindow extends HTMLElement {
             this.setSessionErrorMessage("Session terminated");
             return;
         }
-        this.setSessionErrorMessage(undefined);
+
         if (sessionInfo.user) {
             const appUserSpan = this.byId<HTMLSpanElement>("app-user");
             appUserSpan.textContent = sessionInfo.user.displayName;
+        }
+
+        const appConnectionStateSpan = this.byId<HTMLSpanElement>("app-connection-status");
+
+        switch (sessionInfo.webSocketConnectionState) {
+            case "connected":
+                appConnectionStateSpan.hidden = false;
+                this.setSessionErrorMessage(undefined);
+                break;
+            case "disconnected":
+                appConnectionStateSpan.hidden = true;
+                this.setSessionErrorMessage("Disconnected from server");
+                break;
+            case "connecting":
+                appConnectionStateSpan.hidden = true;
+                this.setSessionErrorMessage("Connecting to server...");
+                break;
         }
     }
 
@@ -75,6 +98,7 @@ class SecondaryWindow extends HTMLElement {
             sessionErrorDialog.textContent = message;
             sessionErrorDialog.showModal();
         } else {
+            sessionErrorDialog.textContent = "";
             sessionErrorDialog.close();
         }
     }

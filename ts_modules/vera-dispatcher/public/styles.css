@@ -20,6 +20,8 @@ html {
   --vera-toolbar-button-selected-color: rgba(255, 255, 255, 0.2);
 
   --vera-warning-color: #ff692a;
+  --vera-error-color: #e7180b;
+  --vera-success-color: #2aa63e;
 
   --vera-space-xl: 2.5rem;
   --vera-space-l: 1.5rem;
@@ -84,6 +86,19 @@ main {
 
 /* Application Footer */
 
+.app-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vera-space-m);
+  padding: var(--vera-space-xs) var(--vera-space-m);
+  background-color: var(--vera-app-header-background-color);
+  color: var(--vera-app-header-color);
+  border-top: 1px solid var(--vera-app-border-color);
+  font-size: var(--vera-font-size-xs);
+}
+
 /* Session Error Dialog */
 
 #session-error-dialog {
@@ -122,4 +137,16 @@ main {
 
 .toolbar button:hover {
   background-color: var(--vera-toolbar-button-hover-color);
+}
+
+/* Colored texts */
+
+.success {
+  color: var(--vera-success-color);
+}
+.warning {
+  color: var(--vera-warning-color);
+}
+.error {
+  color: var(--vera-error-color);
 }

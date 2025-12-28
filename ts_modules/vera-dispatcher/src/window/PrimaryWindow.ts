@@ -3,8 +3,8 @@ import "../component/Icon";
 import "../component/MapView";
 import "../component/ResourceDashboard";
 import { registerWindowLifecycle } from "../session/windowLifecycle";
-import { registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
-import { Store } from "../store/Store";
+import { createSessionInfoStore, registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
+import { WebSocketClient } from "../session/WebSocketClient";
 
 const template = document.createElement("template");
 template.innerHTML = html`
@@ -72,7 +72,7 @@ template.innerHTML = html`
         </div>
         <footer class="app-footer">
             <span id="app-user"></span>
-            <span id="app-connection-status"></span>
+            <span id="app-connection-status" class="success">Connected</span>
         </footer>
         <dialog id="session-error-dialog" closedby="none">
         </dialog>        
@@ -93,7 +93,8 @@ class PrimaryWindow extends HTMLElement {
 
     private unregisterWindowLifecycle?: () => void;
     private unregisterSessionMessageHandler?: () => void;
-    private sessionIntoStore: Store<SessionInfo> = new Store({});
+    private sessionIntoStore = createSessionInfoStore();
+    private client = new WebSocketClient(this.sessionIntoStore);
     private windowDiv?: HTMLDivElement;
 
     constructor() {
@@ -112,7 +113,6 @@ class PrimaryWindow extends HTMLElement {
             const toggle11 = this.byId<HTMLButtonElement>("toggle-1-1-btn");
             const toggle21 = this.byId<HTMLButtonElement>("toggle-2-1-btn");
             const toggle10 = this.byId<HTMLButtonElement>("toggle-1-0-btn");
-            const resourceFilter = this.byId<HTMLSelectElement>("resource-filter-select");
 
             // Register listeners
             toggle01.addEventListener("click", () => this.setLayout("layout-0-1"));
@@ -127,9 +127,11 @@ class PrimaryWindow extends HTMLElement {
         this.unregisterSessionMessageHandler = registerSessionMessageHandler(this.sessionIntoStore);
         this.unregisterWindowLifecycle = registerWindowLifecycle("primary");
         window.addEventListener("keydown", this.onKeyDown);
+        this.client.start();
     }
 
     disconnectedCallback() {
+        this.client.stop();
         window.removeEventListener("keydown", this.onKeyDown);
         this.unregisterWindowLifecycle?.();
         this.unregisterSessionMessageHandler?.();
@@ -177,10 +179,27 @@ class PrimaryWindow extends HTMLElement {
             this.setSessionErrorMessage("Session terminated");
             return;
         }
-        this.setSessionErrorMessage(undefined);
+
         if (sessionInfo.user) {
             const appUserSpan = this.byId<HTMLSpanElement>("app-user");
             appUserSpan.textContent = sessionInfo.user.displayName;
+        }
+
+        const appConnectionStateSpan = this.byId<HTMLSpanElement>("app-connection-status");
+
+        switch (sessionInfo.webSocketConnectionState) {
+            case "connected":
+                appConnectionStateSpan.hidden = false;
+                this.setSessionErrorMessage(undefined);
+                break;
+            case "disconnected":
+                appConnectionStateSpan.hidden = true;
+                this.setSessionErrorMessage("Disconnected from server");
+                break;
+            case "connecting":
+                appConnectionStateSpan.hidden = true;
+                this.setSessionErrorMessage("Connecting to server...");
+                break;
         }
     }
 
@@ -190,9 +209,10 @@ class PrimaryWindow extends HTMLElement {
             sessionErrorDialog.textContent = message;
             sessionErrorDialog.showModal();
         } else {
+            sessionErrorDialog.textContent = "";
             sessionErrorDialog.close();
         }
-    }    
+    }
 
     private byId<T extends HTMLElement>(id: string): T {
         return this.querySelector("#" + id)! as T;
