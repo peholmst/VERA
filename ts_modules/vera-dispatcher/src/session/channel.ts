@@ -13,10 +13,6 @@ export function post(msg: SessionMessage) {
     channel.postMessage(msg);
 }
 
-export interface ChannelRegistration {
-    remove(): void;
-}
-
 export function registerMessageHandler(handler: (msg: SessionMessage) => void): () => void {
     handlers.add(handler);
     return () => handlers.delete(handler);

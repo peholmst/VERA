@@ -16,7 +16,8 @@ export type SessionMessage =
     }
     | {
         type: "SESSION_INFO";
-        userFullName?: string;
+        userName: string;
+        displayName: string;
         token?: string;
     }
     | {
@@ -36,8 +37,8 @@ export function windowHeartbeat(role: WindowRole, ts: number): SessionMessage {
     return { type: "WINDOW_HEARTBEAT", window: role, ts: ts };
 }
 
-export function sessionInfo(userFullName?: string, token?: string): SessionMessage {
-    return { type: "SESSION_INFO", userFullName: userFullName, token: token };
+export function sessionInfo(userName: string, displayName: string, token?: string): SessionMessage {
+    return { type: "SESSION_INFO", userName: userName, displayName: displayName, token: token };
 }
 
 export function sessionClosed(): SessionMessage {

@@ -1,5 +1,5 @@
 import Keycloak, { KeycloakUserInfo } from "keycloak-js";
-import { ChannelRegistration, registerMessageHandler } from "../session/channel";
+import { post, registerMessageHandler } from "../session/channel";
 import { sessionClosed, sessionInfo, SessionMessage, WindowRole } from "../session/messages";
 import { html } from "../util";
 
@@ -26,6 +26,8 @@ template.innerHTML = html`
         <div>
             <button id="start-btn">Start Dispatcher Client</button>
         </div>
+        <dialog id="session-error-dialog" closedby="none">
+        </dialog>        
     </main>
 `;
 
@@ -51,7 +53,7 @@ export class Launcher extends HTMLElement {
     async connectedCallback() {
         // Make sure there is only one launcher window running
         if (localStorage.getItem(LOCK_KEY)) {
-            this.shadowRoot!.textContent = "VERA Dispatcher Client is already running";
+            this.setSessionErrorMessage("VERA Dispatcher Client is already running");
             return;
         }
         localStorage.setItem(LOCK_KEY, "true");
@@ -59,17 +61,23 @@ export class Launcher extends HTMLElement {
 
         // Authenticate
         try {
+            console.log("Authenticating");
             const authenticated = await this.keycloak.init({
                 onLoad: "login-required",
                 checkLoginIframe: false,
                 scope: "profile roles"
             });
             if (!authenticated) {
-                this.shadowRoot!.textContent = "Authentication required";
+                this.setSessionErrorMessage("Authentication required");
                 return;
             }
+            if (!this.keycloak.hasRealmRole("dispatcher")) {
+                this.setSessionErrorMessage("Access denied");
+                return;
+            }
+            console.log("Loading user info");
             this.userInfo = await this.keycloak.loadUserInfo();
-            console.log(this.userInfo);
+            this.postSessionInfo();
 
             // Refresh token
             this.tokenRefreshTimerId = window.setInterval(async () => {
@@ -81,7 +89,7 @@ export class Launcher extends HTMLElement {
 
         } catch (error) {
             console.error("Failed to initialize Keycloak adapter:", error);
-            this.shadowRoot!.textContent = "Authentication error";
+            this.setSessionErrorMessage("Authentication error");
             return;
         }
 
@@ -110,9 +118,16 @@ export class Launcher extends HTMLElement {
         }
     }
 
+    disconnectedCallback() {
+        window.clearInterval(this.watchdogTimerId);
+        window.clearInterval(this.tokenRefreshTimerId);
+        this.unregisterMessageHandler?.();
+        window.removeEventListener("beforeunload", this.onBeforeUnload);
+    }    
+
     private onBeforeUnload = () => {
         localStorage.removeItem(LOCK_KEY);
-        postMessage(sessionClosed());
+        post(sessionClosed());
     };
 
     private onMessage = (msg: SessionMessage) => {
@@ -137,7 +152,7 @@ export class Launcher extends HTMLElement {
         }
     };
 
-    private openWindows = () => {
+    private openWindows() {
         if (!this.windows.has("primary")) {
             window.open("/primary.html", "vera-primary-window", "popup");
         }
@@ -146,17 +161,26 @@ export class Launcher extends HTMLElement {
         }
     };
 
-    private postSessionInfo = () => {
-        console.log("Posting session info to channel");
-        postMessage(sessionInfo(this.userInfo?.name, this.keycloak.token));
+    private postSessionInfo() {
+        if (this.userInfo) {
+            console.log("Posting session info to channel");
+            post(sessionInfo(this.userInfo.preferred_username, this.userInfo.name, this.keycloak.token));
+        }
     }
 
-    disconnectedCallback() {
-        window.clearInterval(this.watchdogTimerId);
-        window.clearInterval(this.tokenRefreshTimerId);
-        this.unregisterMessageHandler?.();
-        window.removeEventListener("beforeunload", this.onBeforeUnload);
+    private setSessionErrorMessage(message?: string) {
+        const sessionErrorDialog = this.byId<HTMLDialogElement>("session-error-dialog");
+        if (message) {
+            sessionErrorDialog.textContent = message;
+            sessionErrorDialog.showModal();
+        } else {
+            sessionErrorDialog.close();
+        }
     }
+
+    private byId<T extends HTMLElement>(id: string): T {
+        return this.shadowRoot!.getElementById(id)! as T;
+    }    
 }
 
 customElements.define("vera-launcher", Launcher);

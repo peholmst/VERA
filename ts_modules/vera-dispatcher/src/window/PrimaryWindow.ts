@@ -3,6 +3,8 @@ import "../component/Icon";
 import "../component/MapView";
 import "../component/ResourceDashboard";
 import { registerWindowLifecycle } from "../session/windowLifecycle";
+import { registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
+import { Store } from "../store/Store";
 
 const template = document.createElement("template");
 template.innerHTML = html`
@@ -68,6 +70,12 @@ template.innerHTML = html`
             <vera-map-view id="map-view"></vera-map-view>
             <vera-resource-dashboard id="resource-dashboard"></vera-resource-dashboard>
         </div>
+        <footer class="app-footer">
+            <span id="app-user"></span>
+            <span id="app-connection-status"></span>
+        </footer>
+        <dialog id="session-error-dialog" closedby="none">
+        </dialog>        
     </main>
 `;
 
@@ -84,6 +92,8 @@ const LAYOUT_KEYS: Record<string, LayoutClassName> = {
 class PrimaryWindow extends HTMLElement {
 
     private unregisterWindowLifecycle?: () => void;
+    private unregisterSessionMessageHandler?: () => void;
+    private sessionIntoStore: Store<SessionInfo> = new Store({});
     private windowDiv?: HTMLDivElement;
 
     constructor() {
@@ -110,7 +120,11 @@ class PrimaryWindow extends HTMLElement {
             toggle11.addEventListener("click", () => this.setLayout("layout-1-1"));
             toggle21.addEventListener("click", () => this.setLayout("layout-2-1"));
             toggle10.addEventListener("click", () => this.setLayout("layout-1-0"));
+
+            // Subscribe to state stores
+            this.sessionIntoStore.subscribe(this.onSessionInfoChanged);
         }
+        this.unregisterSessionMessageHandler = registerSessionMessageHandler(this.sessionIntoStore);
         this.unregisterWindowLifecycle = registerWindowLifecycle("primary");
         window.addEventListener("keydown", this.onKeyDown);
     }
@@ -118,10 +132,10 @@ class PrimaryWindow extends HTMLElement {
     disconnectedCallback() {
         window.removeEventListener("keydown", this.onKeyDown);
         this.unregisterWindowLifecycle?.();
+        this.unregisterSessionMessageHandler?.();
     }
 
     private onKeyDown = (e: KeyboardEvent) => {
-        console.log(e);
         if (this.isTypingTarget(e.target)) return;
 
         if (!e.ctrlKey || !e.altKey) return;
@@ -154,6 +168,31 @@ class PrimaryWindow extends HTMLElement {
         );
         this.windowDiv!.classList.add(layout);
     }
+
+    private onSessionInfoChanged = (sessionInfo: Readonly<SessionInfo>) => {
+        if (sessionInfo.active === undefined) {
+            this.setSessionErrorMessage("Waiting for session information...");
+            return;
+        } else if (sessionInfo.active === false) {
+            this.setSessionErrorMessage("Session terminated");
+            return;
+        }
+        this.setSessionErrorMessage(undefined);
+        if (sessionInfo.user) {
+            const appUserSpan = this.byId<HTMLSpanElement>("app-user");
+            appUserSpan.textContent = sessionInfo.user.displayName;
+        }
+    }
+
+    private setSessionErrorMessage(message?: string) {
+        const sessionErrorDialog = this.byId<HTMLDialogElement>("session-error-dialog");
+        if (message) {
+            sessionErrorDialog.textContent = message;
+            sessionErrorDialog.showModal();
+        } else {
+            sessionErrorDialog.close();
+        }
+    }    
 
     private byId<T extends HTMLElement>(id: string): T {
         return this.querySelector("#" + id)! as T;

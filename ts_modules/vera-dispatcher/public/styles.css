@@ -2,11 +2,24 @@ html {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 1rem;
 
-  --vera-app-header-background-color: #162456;
-  --vera-app-header-color: #F1F5F9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --vera-app-background-color: #181818;
+  --vera-app-color: rgba(255, 255, 255, 0.87);
+  --vera-app-border-color: #2b2b2b;
+  --vera-app-content-background-color: #1f1f1f;
+
+  --vera-app-header-background-color: #1f1f1f;
+  --vera-app-header-color: #9d9d9d;
+  --vera-app-name-color:  #0078d4;
 
   --vera-toolbar-button-hover-color: rgba(255, 255, 255, 0.1);
   --vera-toolbar-button-selected-color: rgba(255, 255, 255, 0.2);
+
+  --vera-warning-color: #ff692a;
 
   --vera-space-xl: 2.5rem;
   --vera-space-l: 1.5rem;
@@ -34,6 +47,8 @@ html {
 
 body {
   margin: 0;
+  background-color: var(--vera-app-background-color);
+  color: var(--vera-app-color);
 }
 
 #app {
@@ -58,11 +73,30 @@ main {
   padding: var(--vera-space-s) var(--vera-space-m);
   background-color: var(--vera-app-header-background-color);
   color: var(--vera-app-header-color);
+  border-bottom: 1px solid var(--vera-app-border-color);
 }
 
 .app-header .app-name {
   font-weight: 600;
   font-size: var(--vera-font-size-l);
+  color: var(--vera-app-name-color);
+}
+
+/* Application Footer */
+
+/* Session Error Dialog */
+
+#session-error-dialog {
+  background-color: var(--vera-app-content-background-color);
+  color: var(--vera-app-color);
+  border: 3px solid var(--vera-warning-color);
+  border-radius: var(--vera-border-radius-m);
+  outline: none;
+}
+
+#session-error-dialog::backdrop {
+  background: var(--vera-app-background-color);
+  opacity: 0.8;
 }
 
 /* Toolbar */
