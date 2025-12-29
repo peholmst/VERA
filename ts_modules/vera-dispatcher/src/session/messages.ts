@@ -44,3 +44,14 @@ export function sessionInfo(userName: string, displayName: string, token?: strin
 export function sessionClosed(): SessionMessage {
     return { type: "SESSION_CLOSED" };
 }
+
+export type WsMessage =
+    | {
+        type: "AUTH";
+        token: string;
+    }
+;
+
+export function wsAuth(token: string): WsMessage {
+    return { type: "AUTH", token: token };
+}

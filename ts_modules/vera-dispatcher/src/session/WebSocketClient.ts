@@ -1,7 +1,8 @@
 import { SessionInfo, WebSocketConnectionState } from "./sessionInfo";
 import { Store } from "../store/Store";
+import { wsAuth } from "./messages";
 
-const wsUri = "ws://127.0.0.1:7071/dispatcher/ws" // TODO Fetch from configuration
+const wsUri = "ws://127.0.0.1:7071/vera/server/dispatcher/ws" // TODO Fetch from configuration
 
 const backoffSlots = [500, 1000, 2000, 4000, 8000, 16_000, 32_000];
 
@@ -11,8 +12,6 @@ export class WebSocketClient {
     private ws?: WebSocket;
     private started = false;
     private backoffSlotsLimit = 0;
-
-    // TODO Implement ping/pong logic?
 
     constructor(sessionInfoStore: Store<SessionInfo>) {
         this.sessionInfoStore = sessionInfoStore;
@@ -40,13 +39,13 @@ export class WebSocketClient {
             setTimeout(() => this.tryConnect(), 500);
             return;
         }
-        this.ws = this.createSocket(token);
+        this.ws = this.createSocket();
     }
 
-    private createSocket(token: string): WebSocket {
+    private createSocket(): WebSocket {
         this.setConnectionState("connecting");
         console.info("Creating WebSocket");
-        const socket = new WebSocket(wsUri, token);
+        const socket = new WebSocket(wsUri);
         socket.addEventListener("open", this.onOpen);
         socket.addEventListener("close", this.onClose);
         socket.addEventListener("error", this.onError);
@@ -91,6 +90,10 @@ export class WebSocketClient {
     private onOpen = (e: Event) => {
         console.info("WebSocket open:", e);
         this.setConnectionState("connected");
+        const token = this.sessionInfoStore.snapshot.user?.token;
+        if (token) {
+            this.ws?.send(JSON.stringify(wsAuth(token)));
+        }
     }
 
     private setConnectionState(state: WebSocketConnectionState) {

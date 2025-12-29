@@ -5,6 +5,16 @@ Started to write this little journal in the evening of December 27, 2025.
 ## Dec 29, 2025
 
 - Improvements to web socket client state management.
+- Implemented initial server-side authentication and session management.
+  - Authentication happens with an AUTH message.
+  - If it does not arrive in 5 seconds, the server terminates the session.
+- Implemented server initiated pings (seem to keep the connection alive).
+- Added context path to server.
+
+Things to do:
+- [ ] Server: Implement support for back channel logouts
+- [ ] Server: Verify tokens with the introspection endpoint upon initial authentication
+
 
 ## Dec 28, 2025
 
@@ -18,9 +28,9 @@ Started to write this little journal in the evening of December 27, 2025.
 Things to do:
 - [ ] Add Keycloak error handlers to the launcher
 - [ ] Add proper context paths to all servers (dispatcher, server, gis) so that they all can run behind the same proxy
-- [ ] Implement server-side authentication of clients (how to pass the secret without logging it?)
-- [ ] Find out why the websocket is automatically closed after some time (I assume this is by design and some keep alive traffic is needed)
-- [ ] How to keep the browser tabs alive on both screens for hours?
+- [X] Implement server-side authentication of clients (how to pass the secret without logging it?)
+- [X] Find out why the websocket is automatically closed after some time (I assume this is by design and some keep alive traffic is needed)
+- [X] How to keep the browser tabs alive on both screens for hours?
 - [X] Add more intermediate connection states (e.g. when the client is waiting to reconnect, authenticating, etc.)
 - [ ] Access denied => end the session globally (both windows + launcher)
 
