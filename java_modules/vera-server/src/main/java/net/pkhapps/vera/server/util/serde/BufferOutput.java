@@ -143,4 +143,11 @@ public final class BufferOutput implements Output {
     public ByteBuffer buffer() {
         return byteBuffer;
     }
+
+    /// Returns the backing array.
+    ///
+    /// @return the byte array
+    public byte[] array() {
+        return byteBuffer.array();
+    }
 }
