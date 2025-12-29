@@ -7,18 +7,35 @@ export type User = {
     token?: string;
 }
 
-export type WebSocketConnectionState = "connected" | "connecting" | "disconnected";
+export type WebSocketConnectionState = "connected" | "connecting" | "disconnected" | "waiting_to_reconnect";
+
+export type WebSocketConnection = {
+    state: WebSocketConnectionState;
+}
+
+export function getWebSocketConnectionStateMessage(state?: WebSocketConnectionState): string | undefined {
+    switch (state) {
+        case "connected":
+            return undefined;
+        case "disconnected":
+            return "Disconnected from server";
+        case "connecting":
+            return "Connecting to server...";
+        case "waiting_to_reconnect":
+            return "Waiting to reconnect to server...";
+        case undefined:
+            return "Web socket client not initialized";
+    }
+}
 
 export type SessionInfo = {
     user?: User;
     active?: boolean;
-    webSocketConnectionState: WebSocketConnectionState;
+    webSocket?: WebSocketConnection;
 };
 
 export function createSessionInfoStore(): Store<SessionInfo> {
-    return new Store<SessionInfo>({
-        webSocketConnectionState: "disconnected"
-    });
+    return new Store<SessionInfo>({});
 }
 
 export function registerSessionMessageHandler(store: Store<SessionInfo>): () => void {

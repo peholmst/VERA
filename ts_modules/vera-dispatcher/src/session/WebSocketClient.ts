@@ -16,6 +16,7 @@ export class WebSocketClient {
 
     constructor(sessionInfoStore: Store<SessionInfo>) {
         this.sessionInfoStore = sessionInfoStore;
+        this.setConnectionState("disconnected");
     }
 
     start() {
@@ -64,6 +65,7 @@ export class WebSocketClient {
 
         const delay = this.getBackoffMs();
         console.info(`Reconnecting in ${delay} ms...`);
+        this.setConnectionState("waiting_to_reconnect");
         setTimeout(() => this.tryConnect(), delay);
     }
 
@@ -92,6 +94,6 @@ export class WebSocketClient {
     }
 
     private setConnectionState(state: WebSocketConnectionState) {
-        this.sessionInfoStore.update(s => s.webSocketConnectionState = state);
+        this.sessionInfoStore.update(s => s.webSocket = { state: state });
     }
 }

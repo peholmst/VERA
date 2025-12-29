@@ -1,6 +1,6 @@
 import { html } from "../util";
 import { registerWindowLifecycle } from "../session/windowLifecycle";
-import { createSessionInfoStore, registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
+import { createSessionInfoStore, getWebSocketConnectionStateMessage, registerSessionMessageHandler, SessionInfo } from "../session/sessionInfo";
 import { WebSocketClient } from "../session/WebSocketClient";
 
 const template = document.createElement("template");
@@ -74,30 +74,18 @@ class SecondaryWindow extends HTMLElement {
             appUserSpan.textContent = sessionInfo.user.displayName;
         }
 
-        const appConnectionStateSpan = this.byId<HTMLSpanElement>("app-connection-status");
-
-        switch (sessionInfo.webSocketConnectionState) {
-            case "connected":
-                appConnectionStateSpan.hidden = false;
-                this.setSessionErrorMessage(undefined);
-                break;
-            case "disconnected":
-                appConnectionStateSpan.hidden = true;
-                this.setSessionErrorMessage("Disconnected from server");
-                break;
-            case "connecting":
-                appConnectionStateSpan.hidden = true;
-                this.setSessionErrorMessage("Connecting to server...");
-                break;
-        }
+        this.setSessionErrorMessage(getWebSocketConnectionStateMessage(sessionInfo.webSocket?.state));
     }
 
     private setSessionErrorMessage(message?: string) {
         const sessionErrorDialog = this.byId<HTMLDialogElement>("session-error-dialog");
+        const appConnectionStateSpan = this.byId<HTMLSpanElement>("app-connection-status");
         if (message) {
+            appConnectionStateSpan.hidden = true;
             sessionErrorDialog.textContent = message;
             sessionErrorDialog.showModal();
         } else {
+            appConnectionStateSpan.hidden = false;
             sessionErrorDialog.textContent = "";
             sessionErrorDialog.close();
         }
