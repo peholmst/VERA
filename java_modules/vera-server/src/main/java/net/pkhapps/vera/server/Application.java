@@ -18,6 +18,7 @@ package net.pkhapps.vera.server;
 
 import io.javalin.Javalin;
 import net.pkhapps.vera.server.adapter.AdapterFactory;
+import net.pkhapps.vera.server.dispatcher.controller.DispatcherControllerFactory;
 import net.pkhapps.vera.server.domain.model.DomainModel;
 import net.pkhapps.vera.server.port.PrimaryPorts;
 import net.pkhapps.vera.server.util.wal.FileSystemWal;
@@ -38,6 +39,7 @@ public class Application {
         this.port = port;
         wal = new FileSystemWal(directory, DomainModel.serdeRegistrators());
         javalin = AdapterFactory.createJavalin(PrimaryPorts.create(DomainModel.create(wal)));
+        DispatcherControllerFactory.createController(javalin);
     }
 
     /// Starts the application
@@ -58,7 +60,7 @@ public class Application {
 
     public static void main(String[] args) {
         var directory = Path.of("vera-server-data/").toAbsolutePath();
-        var app = new Application(directory, 7070);
+        var app = new Application(directory, 7071);
         app.start();
         Runtime.getRuntime().addShutdownHook(new Thread(app::stop));
     }
