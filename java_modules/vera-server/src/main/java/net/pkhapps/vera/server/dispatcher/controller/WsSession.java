@@ -18,7 +18,6 @@ package net.pkhapps.vera.server.dispatcher.controller;
 
 import net.pkhapps.vera.security.SecurityException;
 import net.pkhapps.vera.server.dispatcher.internal.DispatcherPrincipal;
-import net.pkhapps.vera.server.util.ScheduledJob;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.jspecify.annotations.Nullable;
@@ -26,73 +25,140 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Duration;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-class WsSession {
+final class WsSession {
 
     private static final Logger log = LoggerFactory.getLogger(WsSession.class);
     private final OidcSessionManager oidcSessionManager;
     private final String sessionId;
     private final Session session;
-    private final ScheduledJob closeWithoutAuthentication;
-    private @Nullable ScheduledJob ping;
+    private final ScheduledFuture<?> closeWithoutAuthentication;
+    private final ScheduledFuture<?> ping;
+    private final AtomicBoolean shutdownStarted = new AtomicBoolean(false);
     private @Nullable DispatcherPrincipal principal;
 
-    public WsSession(OidcSessionManager oidcSessionManager, String sessionId, Session session) {
+    WsSession(OidcSessionManager oidcSessionManager, ScheduledExecutorService executorService, String sessionId, Session session) {
         this.oidcSessionManager = oidcSessionManager;
         this.sessionId = sessionId;
         this.session = session;
-        this.closeWithoutAuthentication = ScheduledJob.schedule(this::accessDenied, Duration.ofSeconds(5));
+        closeWithoutAuthentication = executorService.schedule(this::accessDenied, 5, TimeUnit.SECONDS);
+        ping = executorService.scheduleWithFixedDelay(this::ping, 20, 20, TimeUnit.SECONDS);
     }
 
-    public synchronized void onMessage(WsRequestMessage message) {
+    /// Called by [WsController] when a new message arrives for this session.
+    ///
+    /// @param message the incoming message
+    void onMessage(WsRequestMessage message) {
         switch (message) {
-            case WsRequestMessage.Authenticate authenticate -> {
-                closeWithoutAuthentication.cancel();
-                try {
-                    accessGranted(oidcSessionManager.verifyOidcToken(authenticate.token()));
-                } catch (SecurityException e) {
-                    accessDenied();
-                }
-            }
+            case WsRequestMessage.Authenticate authMsg -> authenticate(authMsg);
+            // TODO Implement support for more messages
             default -> throw new IllegalStateException("Unexpected message: " + message);
         }
     }
 
-    public void send(WsResponseMessage message) {
-
+    /// Called by [WsController] when the connection for this session has been closed.
+    void onClose() {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
+        }
+        shutdown(StatusCode.NORMAL, null);
     }
 
-    public synchronized void close() {
-        closeWithoutAuthentication.cancel();
-        if (ping != null) {
-            ping.cancel();
+    /// Called by [WsController] when the server is stopping.
+    void onServerStop() {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
         }
-        session.close();
+        log.info("{} Service restarting, shutting down session", sessionId);
+        shutdown(StatusCode.SERVICE_RESTART, null);
+    }
+
+    /// Called by [WsController] when an error has been detected in this session.
+    void onError(@Nullable Throwable error) {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
+        }
+        if (error != null) {
+            log.error("{} An error occurred, shutting down session", sessionId, error);
+        } else {
+            log.error("{} An error occurred, shutting down session", sessionId);
+        }
+        shutdown(StatusCode.SERVER_ERROR, null);
+    }
+
+    /// Called by [WsController] when it has received a message for this session that it can't parse.
+    void onUnknownMessage() {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
+        }
+        log.error("{} Unknown incoming message, shutting down session", sessionId);
+        shutdown(StatusCode.BAD_DATA, null);
+    }
+
+    private void send(WsResponseMessage message) {
+        // TODO Implement me
+    }
+
+    private void authenticate(WsRequestMessage.Authenticate authenticate) {
+        if (shutdownStarted.get()) {
+            return;
+        }
+        closeWithoutAuthentication.cancel(false);
+        try {
+            accessGranted(oidcSessionManager.verifyOidcToken(authenticate.token()));
+        } catch (SecurityException e) {
+            accessDenied();
+        }
     }
 
     private void accessGranted(DispatcherPrincipal principal) {
-        log.info("{} Access granted to {}", sessionId, principal);
-        this.principal = principal;
-        schedulePing();
-    }
-
-    private void schedulePing() {
-        this.ping = ScheduledJob.schedule(this::ping, Duration.ofSeconds(20));
-    }
-
-    private synchronized void ping() {
-        try {
-            session.getRemote().sendPing(null);
-            schedulePing();
-        } catch (IOException e) {
-            log.error("{} Error sending ping", sessionId, e);
-            close();
+        synchronized (this) {
+            if (shutdownStarted.get()) {
+                return;
+            }
+            log.info("{} Access granted to {}", sessionId, principal);
+            this.principal = principal;
         }
     }
 
-    private synchronized void accessDenied() {
-        log.info("{} Access denied", sessionId);
-        session.close(StatusCode.POLICY_VIOLATION, "Access denied");
+    private void ping() {
+        try {
+            synchronized (this) {
+                if (shutdownStarted.get()) {
+                    return;
+                }
+                session.getRemote().sendPing(null);
+            }
+        } catch (IOException e) {
+            unrecoverableServerError(e, "Error sending ping");
+        }
+    }
+
+    private void unrecoverableServerError(Throwable error, String reason) {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
+        }
+        log.error("{} {}, shutting down session", sessionId, reason, error);
+        shutdown(StatusCode.SERVER_ERROR, null);
+    }
+
+    private void accessDenied() {
+        if (!shutdownStarted.compareAndSet(false, true)) {
+            return;
+        }
+        log.warn("{} Access denied, shutting down session", sessionId);
+        shutdown(StatusCode.POLICY_VIOLATION, "Access denied");
+    }
+
+    private void shutdown(int statusCode, @Nullable String reason) {
+        closeWithoutAuthentication.cancel(false);
+        ping.cancel(false);
+        synchronized (this) {
+            session.close(statusCode, reason);
+        }
     }
 }

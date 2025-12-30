@@ -26,47 +26,64 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 class WsController {
 
     private static final Logger log = LoggerFactory.getLogger(WsController.class);
     private final OidcSessionManager oidcSessionManager;
+    private final ScheduledExecutorService executorService;
     private final ConcurrentMap<String, WsSession> sessions = new ConcurrentHashMap<>();
 
     WsController(OidcSessionManager oidcSessionManager) {
         this.oidcSessionManager = oidcSessionManager;
+        this.executorService = Executors.newSingleThreadScheduledExecutor();
     }
 
     public void registerRoutes(Javalin javalin) {
         javalin
                 .ws("/dispatcher/ws", ws -> {
-                    ws.onConnect(this::onClientConnect);
-                    ws.onClose(this::onCloseByClient);
-                    ws.onMessage(this::onClientMessage);
-                    ws.onError(this::onClientError);
-                });
+                    ws.onConnect(this::onConnect);
+                    ws.onClose(this::onClose);
+                    ws.onMessage(this::onMessage);
+                    ws.onError(this::onError);
+                })
+                .events(event -> event.serverStopping(this::onServerStop));
     }
 
-    void onClientConnect(WsConnectContext context) {
+    void onConnect(WsConnectContext context) {
         final var sessionId = context.sessionId();
         log.info("{} Connection opened from {}", sessionId, context.session.getRemoteAddress());
-        sessions.put(sessionId, new WsSession(oidcSessionManager, sessionId, context.session));
+        sessions.put(sessionId, new WsSession(oidcSessionManager, executorService, sessionId, context.session));
     }
 
-    void onCloseByClient(WsCloseContext context) {
+    void onClose(WsCloseContext context) {
         final var sessionId = context.sessionId();
         log.info("{} Connection closed", sessionId);
-        sessions.remove(sessionId).close();
+        sessions.remove(sessionId).onClose();
     }
 
-    void onClientMessage(WsMessageContext context) {
-        var message = context.messageAsClass(WsRequestMessage.class);
-        getSession(context.sessionId()).onMessage(message);
+    void onMessage(WsMessageContext context) {
+        final var sessionId = context.sessionId();
+        WsRequestMessage message;
+        try {
+            message = context.messageAsClass(WsRequestMessage.class);
+        } catch (Exception e) {
+            log.error("{} Could not parse incoming message", sessionId, e);
+            getSession(sessionId).onUnknownMessage();
+            return;
+        }
+        getSession(sessionId).onMessage(message);
     }
 
-    void onClientError(WsErrorContext context) {
-        log.warn("{} An error occurred, terminating session", context.sessionId(), context.error());
-        getSession(context.sessionId()).close();
+    void onError(WsErrorContext context) {
+        getSession(context.sessionId()).onError(context.error());
+    }
+
+    void onServerStop() {
+        log.info("Server stopping, closing all connections");
+        sessions.forEach((_, wsSession) -> wsSession.onServerStop());
     }
 
     private WsSession getSession(String sessionId) {
