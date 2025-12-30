@@ -104,24 +104,18 @@ final class WsSession {
     }
 
     private void authenticate(WsRequestMessage.Authenticate authenticate) {
-        if (shutdownStarted.get()) {
-            return;
-        }
         closeWithoutAuthentication.cancel(false);
         try {
-            accessGranted(oidcSessionManager.verifyOidcToken(authenticate.token()));
+            synchronized (this) {
+                if (shutdownStarted.get()) {
+                    return;
+                }
+                var principal = oidcSessionManager.verifyOidcToken(authenticate.token());
+                log.info("{} Access granted to {}", sessionId, principal);
+                this.principal = principal;
+            }
         } catch (SecurityException e) {
             accessDenied();
-        }
-    }
-
-    private void accessGranted(DispatcherPrincipal principal) {
-        synchronized (this) {
-            if (shutdownStarted.get()) {
-                return;
-            }
-            log.info("{} Access granted to {}", sessionId, principal);
-            this.principal = principal;
         }
     }
 
