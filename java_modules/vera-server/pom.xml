@@ -27,12 +27,10 @@
     </parent>
 
     <artifactId>vera-server</artifactId>
-    <version>1.0-SNAPSHOT</version>
 
     <properties>
         <!-- TODO Only one JSON dependency! -->
         <json.version>20250517</json.version>
-        <jackson.version>2.20.0</jackson.version>
     </properties>
 
     <dependencies>
@@ -52,7 +50,10 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
         </dependency>
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
@@ -67,6 +68,11 @@
             <groupId>io.javalin</groupId>
             <artifactId>javalin-testtools</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.pkhapps.vera</groupId>
+            <artifactId>vera-security</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
