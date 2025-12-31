@@ -21,12 +21,13 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
 import io.javalin.json.JavalinJackson;
+import net.pkhapps.vera.security.AccessDeniedException;
+import net.pkhapps.vera.security.AuthenticationRequiredException;
+import net.pkhapps.vera.security.javalin.PrincipalUtil;
 import net.pkhapps.vera.server.adapter.rest.admin.StationAdminController;
 import net.pkhapps.vera.server.domain.base.NonExistentAggregateException;
 import net.pkhapps.vera.server.domain.model.station.StationId;
 import net.pkhapps.vera.server.port.PrimaryPorts;
-import net.pkhapps.vera.server.security.AccessDeniedException;
-import net.pkhapps.vera.server.security.AuthenticationRequiredException;
 
 import static net.pkhapps.vera.server.adapter.IdentifierJsonSerde.registerIdentifier;
 
@@ -44,6 +45,7 @@ public final class AdapterFactory {
         return Javalin
                 .create(config -> {
                     config.jsonMapper(new JavalinJackson(createObjectMapper(), true));
+                    config.router.contextPath = "/vera/server";
                 })
                 .before(context -> {
                     // TODO Extract authentication token from header, turn into principal unless set already
