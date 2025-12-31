@@ -16,5 +16,30 @@
 
 package net.pkhapps.vera.server.dispatcher.controller;
 
+import io.javalin.Javalin;
+import io.javalin.http.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class OidcController {
+
+    private static final Logger log = LoggerFactory.getLogger(OidcController.class);
+    private final OidcSessionManager oidcSessionManager;
+
+    OidcController(OidcSessionManager oidcSessionManager) {
+        this.oidcSessionManager = oidcSessionManager;
+    }
+
+    public void registerRoutes(Javalin javalin) {
+        javalin.post("/dispatcher/logout", this::onLogout);
+    }
+
+    void onLogout(Context context) {
+        var logoutToken = context.formParam("logout_token");
+        if (logoutToken != null) {
+            oidcSessionManager.processLogoutToken(logoutToken);
+        } else {
+            log.warn("Received unknown logout request from {}", context.req().getRemoteAddr());
+        }
+    }
 }

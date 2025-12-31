@@ -18,10 +18,10 @@ package net.pkhapps.vera.server.dispatcher.internal;
 
 import java.security.Principal;
 
-public record DispatcherPrincipal(String id) implements Principal {
+public record DispatcherPrincipal(String sub, String sid) implements Principal {
 
     @Override
     public String getName() {
-        return id;
+        return sub;
     }
 }

@@ -32,8 +32,10 @@ public final class DispatcherControllerFactory {
                     new URL("https://saturn.pkhapps.net/auth/realms/vera-dev/protocol/openid-connect/certs"),
                     new URL("https://saturn.pkhapps.net/auth/realms/vera-dev"),
                     "https://saturn.pkhapps.net/auth/realms/vera-dev/protocol/openid-connect/token/introspect");
-            var controller = new WsController(sessionManager);
-            controller.registerRoutes(javalin);
+            var wsController = new WsController(sessionManager);
+            wsController.registerRoutes(javalin);
+            var oidcController = new OidcController(sessionManager);
+            oidcController.registerRoutes(javalin);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

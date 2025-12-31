@@ -18,6 +18,7 @@ package net.pkhapps.vera.server.dispatcher.controller;
 
 import net.pkhapps.vera.security.SecurityException;
 import net.pkhapps.vera.server.dispatcher.internal.DispatcherPrincipal;
+import net.pkhapps.vera.server.util.Registration;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.StatusCode;
 import org.jspecify.annotations.Nullable;
@@ -40,6 +41,7 @@ final class WsSession {
     private final ScheduledFuture<?> ping;
     private final AtomicBoolean shutdownStarted = new AtomicBoolean(false);
     private @Nullable DispatcherPrincipal principal;
+    private @Nullable Registration principalRevocationHandlerRegistration;
 
     WsSession(OidcSessionManager oidcSessionManager, ScheduledExecutorService executorService, String sessionId, Session session) {
         this.oidcSessionManager = oidcSessionManager;
@@ -110,9 +112,14 @@ final class WsSession {
                 if (shutdownStarted.get()) {
                     return;
                 }
-                var principal = oidcSessionManager.verifyOidcToken(authenticate.token());
+                if (principal != null) {
+                    log.warn("{} Sent another authentication message, ignoring", sessionId);
+                    return;
+                }
+                principal = oidcSessionManager.processAccessToken(authenticate.token());
+                principalRevocationHandlerRegistration = oidcSessionManager
+                        .registerPrincipalRevocationHandler(principal, this::accessDenied);
                 log.info("{} Access granted to {}", sessionId, principal);
-                this.principal = principal;
             }
         } catch (SecurityException e) {
             accessDenied();
@@ -152,6 +159,9 @@ final class WsSession {
         closeWithoutAuthentication.cancel(false);
         ping.cancel(false);
         synchronized (this) {
+            if (principalRevocationHandlerRegistration != null) {
+                principalRevocationHandlerRegistration.remove();
+            }
             session.close(statusCode, reason);
         }
     }
